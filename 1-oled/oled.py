@@ -8,10 +8,6 @@ oled_width = 128
 oled_height = 64
 oled = SSD1306_I2C(oled_width, oled_height, i2c)
 
-while True:
-    system_time = utime.ticks_ms()
-    oled.fill(0)
-    oled.text("System time: ", 0, 0)
-    oled.text(str(system_time), 0, 20)
-    oled.show()
+oled.text("Hello, world!", 0, 0)
+oled.show()
 
