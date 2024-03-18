@@ -5,6 +5,8 @@ The 0.96-inch SSD1306 OLED display is a compact and versatile display module tha
 
 </br>
 
+</br>
+
 ## SSD1306 Library
 The library for writing to the OLED display isn't included in the standard MicroPython library, so we must upload the specific library designed for interfacing with the SSD1306 OLED display over I2C in a MicroPython environment. 
 
@@ -20,7 +22,7 @@ I am using Thonny IDE here.
 
 </br>
 
-## OLED Pinout
+## I2C Communication
 
 | OLED        | Meaning     | ESP32         |
 | :---        |    :----:   |          ---: |
@@ -32,11 +34,11 @@ I am using Thonny IDE here.
 </br>
 
 ## Result
+After uploading the library to the ESP32 and connecting to the correct pin, we can simply print the "Hello, World!" message or the values of other variables on the display.
 
 <img width="600" alt="OLED display with ESP32" src="https://github.com/luluwu516/ESP32/assets/98475122/af039bbd-91ac-465b-a94c-a5bd4a107c81">
 
-After uploading the library to the ESP32 and connecting to the correct pin, we can simply print the "Hello, World!" message on the display.
-
+</br>
 
 </br>
 
