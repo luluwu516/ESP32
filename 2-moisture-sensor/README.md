@@ -78,5 +78,5 @@ Air has a higher resistance. The display showed 511 Ohm (Ω), the maximum value 
 I can use the analog output value to control the water pump and build an automated watering system. Wish me luck!
 
 ## Reference
-* [FLAG]()
-* [](https://docs.micropython.org/en/latest/esp32/quickref.html)
+* [FLAG](https://www.flag.com.tw/maker/FM636A)
+* [MicroPyhon](https://docs.micropython.org/en/latest/esp32/quickref.html)
