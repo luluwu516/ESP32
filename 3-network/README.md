@@ -12,7 +12,7 @@ Amazon forgot to send me the tube that should come with the pump, so I returned 
 
 ## IFTTT (IF This Then That)
 
-IFTTT (If This Then That) is a powerful automation platform that connects various online services and devices to create custom workflows, known as applets, based on simple conditional statements. The platform's name reflects its functionality: "If this, then that." It allows users to create chains of conditional statements called applets, which trigger an action in one service when a predefined condition occurs in another.
+[IFTTT (If This Then That)](https://ifttt.com/explore) is a powerful automation platform that connects various online services and devices to create custom workflows, known as applets, based on simple conditional statements. The platform's name reflects its functionality: "If this, then that." It allows users to create chains of conditional statements called applets, which trigger an action in one service when a predefined condition occurs in another.
 
 I planned to use the service to connect my auto-watering system to Line so I would know when my machine was watering my plants.
 
