@@ -24,7 +24,7 @@ For Soil Moisture Detect Sensor:
 For OLED display:
 
 | OLED        | Meaning     | ESP32         |
-| :---        |    :----   |          ---: |
+| :---        |    :----    |          ---: |
 | VCC         | Power       | 3V            |
 | GND         | Ground      | GND           |
 | SCL         | Clock line  | 22 SCL        |
@@ -34,6 +34,32 @@ For OLED display:
 
 <br />
 
+<br />
+
+## ADC (analog to digital conversion)
+
+> On the ESP32, ADC functionality is available on pins 32-39 (ADC block 1) and pins 0, 2, 4, 12-15, and 25-27 (ADC block 2).
+
+To read voltages above the reference voltage, apply input attenuation with the atten keyword argument.
+| Constant         | Input Attenuation                   | 
+| :---             |    :----                            | 
+| ADC.ATTN_0DB     | No attenuation (100mV - 950mV)      |
+| ADC.ATTN_2_5DB   | 2.5dB attenuation (100mV - 1250mV)  |
+| ADC.ATTN_6DB     | 6dB attenuation (150mV - 1750mV)    |
+| ADC.ATTN_11DB    | 11dB attenuation (150mV - 2450mV)   |
+
+<br />
+
+Resolutions
+
+| Constant         | Resolutions         | 
+| :---             |    :----            | 
+| ADC.WIDTH_9BIT   | 9 bits (0-511)      |
+| ADC.WIDTH_10BIT  | 10 bits (0-1023)    |
+| ADC.WIDTH_11BIT  | 11 bits (0-2047)    |
+| ADC.WIDTH_12BIT  | 12 bits (0-4095)    |
+
+<br />
 
 ## Result
 
@@ -50,3 +76,7 @@ Air has a higher resistance. The display showed 511 Ohm (Ω), the maximum value 
 <br />
 
 I can use the analog output value to control the water pump and build an automated watering system. Wish me luck!
+
+## Reference
+* [FLAG]()
+* [](https://docs.micropython.org/en/latest/esp32/quickref.html)
