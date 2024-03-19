@@ -1,6 +1,5 @@
 from machine import Pin, SoftI2C
 from ssd1306 import SSD1306_I2C
-import utime
 
 i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
 
