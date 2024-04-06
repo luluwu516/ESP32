@@ -9,16 +9,17 @@ oled_height = 64
 oled = SSD1306_I2C(oled_width, oled_height, i2c)
 
 # Sensor
-adc_pin = Pin(36)          # VP pin
-adc = ADC(adc_pin)         # set input
+adc_pin = Pin(36)  # VP pin
+adc = ADC(adc_pin)  # set input
 adc.width(ADC.WIDTH_9BIT)  # set resolutions
-adc.atten(ADC.ATTN_11DB)   # set attenuation
+adc.atten(ADC.ATTN_11DB)  # set attenuation
 
 while True:
-    gsr = adc.read()
+    resistance = adc.read()
+    moisture_value = (511 - resistance) * 100 // 511
     oled.fill(0)
-    oled.text("Resistance: ", 0, 0)
-    oled.text(str(gsr) + " Ohm", 0, 16)
-    oled.show()
-    
+    oled.text("Moisture Value: ", 0, 0)
+    oled.text(str(moisture_value) + " %", 0, 16)
+    oled.text(str(resistance) + " Ohm", 0, 32)
+
     utime.sleep_ms(100)
