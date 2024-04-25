@@ -1,54 +1,85 @@
 import bh1750
+import utime
 from machine import Pin, PWM, SoftI2C
 from ssd1306 import SSD1306_I2C
 
-count = 0
+# Constants
+LIGHT_THRESHOLD = 10000
+WATCH_INTERVAL = 1
+BUZZER_PIN = 16
+SCL_PIN = 22
+SDA_PIN = 21
+OLEDC_WIDTH = 128
+OLEDC_HEIGHT = 64
 
-# i2c
-i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
 
-# oled
-oled_width = 128
-oled_height = 64
-oled = SSD1306_I2C(oled_width, oled_height, i2c)
+def setup():
+    # Initialize I2C
+    i2c = SoftI2C(scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
 
-# buzzer
-buzzer = PWM(Pin(16, Pin.OUT), freq=110, duty=0)
+    # Initialize OLED Display
+    oled = SSD1306_I2C(OLEDC_WIDTH, OLEDC_HEIGHT, i2c)
+    return i2c, oled
 
-# Turn on the anti-theft laser
-while count < 5:
-    light_level = bh1750.sample(i2c, mode=0x23)
-    
-    oled.fill(0)
-    oled.text("Setting...", 0, 0)
-    
-    if light_level > 10000:
-        count += 1
-        oled.text(str(count) + " second(s)", 0, 16)
+
+def turn_on_buzzer(buzzer, level):
+    if level < LIGHT_THRESHOLD:
         buzzer.duty(512)
-    else:
-        count = 0
-    
-    oled.show()
-    utime.sleep(1)
-    
-
-# The anti-theft is on
-while True:
-    light_level = bh1750.sample(i2c, mode=0x23)
-    
-    oled.fill(0)
-    oled.text("Watching...", 0, 0)
-    
-    if light_level < 10000:
-        buzzer.duty(512)
-        oled.fill(0)
-        oled.text("!! WARNING !!", 0, 0)
-        oled.text("!! WARNING !!", 0, 16)
-        oled.text("!! WARNING !!", 0, 32)
-        utime.sleep(1)
-        
     else:
         buzzer.duty(0)
 
 
+def main():
+    # Initialize buzzer
+    buzzer = PWM(Pin(BUZZER_PIN, Pin.OUT), freq=110, duty=0)
+
+    # Setup I2C and OLED
+    i2c, oled = setup()
+
+    # Turn on the anti-theft laser
+    count = 0
+    while count < 5:
+        light_level = bh1750.sample(i2c, mode=0x23)
+
+        oled.fill(0)
+        oled.text("Setting...", 0, 0)
+
+        if light_level > LIGHT_THRESHOLD:
+            count += 1
+            oled.text(str(count) + " second(s)", 0, 16)
+        else:
+            count = 0
+
+        oled.show()
+        utime.sleep(WATCH_INTERVAL)
+
+    oled.fill(0)
+    oled.text("Device on!", 0, 0)
+    oled.show()
+    utime.sleep(2)
+
+    # The anti-theft is on
+    while True:
+        light_level = bh1750.sample(i2c, mode=0x23)
+
+        oled.fill(0)
+        oled.text("Watching...", 0, 0)
+
+        turn_on_buzzer(buzzer, light_level)
+
+        if light_level < LIGHT_THRESHOLD:
+            oled.fill(0)
+            oled.text("!! WARNING !!", 0, 0)
+            oled.text("!! WARNING !!", 0, 16)
+            oled.text("!! WARNING !!", 0, 32)
+            oled.show()
+            utime.sleep(1)
+
+        else:
+            oled.show()
+
+        utime.sleep(WATCH_INTERVAL)
+
+
+if __name__ == "__main__":
+    main()
