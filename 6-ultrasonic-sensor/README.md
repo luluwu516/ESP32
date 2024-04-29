@@ -1,5 +1,19 @@
 # HC-SR04 Ultrasonic Sensor
 
+The HC-SR04 Ultrasonic utilizes ultrasonic waves to measure distances accurately. Employing ultrasonic waves, it adeptly gauges distances with precision. Through the transmission of straightforward digital signals, the sensor seamlessly interfaces with microcontrollers and allied devices, facilitating smooth integration into diverse projects.
+
+Operating within a range from 2 cm to 400 cm, the HC-SR04 Ultrasonic Sensor consistently furnishes reliable distance readings with an impressive accuracy of 0.3cm (0.1 inches). Its utility extends across various applications, encompassing robotics, security systems, industrial automation, and many other endeavors necessitating robust distance-sensing capabilities.
+
+<br />
+
+<img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/2b31f610-ab58-4668-8b06-f27cbecaff5d">
+
+<br />
+
+<br />
+
+## Mechanism: How does it work?
+
 The HC-SR04 ultrasonic sensor operates based on the principle of ultrasonic waves to measure distance. Here is how it works:
 
 1. The ultrasound transmitter (trig pin) emits a high-frequency sound, typically at 40 kHz.
@@ -7,6 +21,14 @@ The HC-SR04 ultrasonic sensor operates based on the principle of ultrasonic wave
 2. This emitted sound travels through the air, and upon encountering an object, it reflects back towards the module.
 
 3. The echo pin, serving as the ultrasound receiver, picks up the reflected sound, also known as the echo.
+
+<br />
+
+<img width="599" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/f86518d1-c793-419e-b255-18b7a246e207">
+
+<br />
+
+<br />
 
 <br />
 
@@ -18,7 +40,21 @@ Dividing by 2 accounts for the measured time representing the total round-trip d
 
 <br />
 
-<img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/2b31f610-ab58-4668-8b06-f27cbecaff5d">
+<br />
+
+## Features
+
+* Working Voltage: DC 5V
+* Working Current: 15 mA
+* Working Frequency: 40 Hz
+* Max Range: 4 m
+* Min Range: 2 cm
+* MeasuringAngle: 15 degree
+* Trigger Input Signal: 10uS TTL pulse
+* Echo Output Signal: Input TTL lever signal and the range in proportion
+* Dimension: 45 × 20 × 15 mm 
+
+For more information, check out [the HC-SR04 Ultrasonic Sensor datasheet](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf).
 
 <br />
 
@@ -51,6 +87,8 @@ For Buzzer:
 | +           | Power       | 16            |
 | -           | Ground      | GND           |
 
+<br />
+
 <img width="406" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/6f9166cb-260e-4d87-8939-92c7f499b3bd">
 
 <br />
@@ -77,11 +115,15 @@ I am using Thonny IDE here.
 
 The HC-SR04 ultrasonic sensor offers a versatile range, enabling distance measurements from as close as 2 centimeters to as far as 4 meters (sonar.py). Personally, I found it remarkably precise when gauging the depth of my MacBook Air (shown in the figure). Moreover, its adaptability extends to diverse applications such as crafting anti-theft mechanisms (anti-theft.py), assisting in parking (parking-sensor.py), and even constructing an air piano (air-piano.py). 
 
-These are just a few examples of the many applications of HC-SR04 ultrasonic sensors. They can also applied to obstacle avoidance in robotics, monitoring liquid levels in fish tanks, implementing automatic trash bins, and much more.
-
 <img width="406" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/d13ba43f-61ca-40d3-9a78-0dddfdaccc91">
 
 <br />
+
+<br />
+
+## Brief Summary
+
+These are just a few examples of the many applications of HC-SR04 ultrasonic sensors. They can also applied to obstacle avoidance in robotics, monitoring liquid levels in fish tanks, implementing automatic trash bins, and much more.
 
 <br />
 
