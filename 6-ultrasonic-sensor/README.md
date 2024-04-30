@@ -18,13 +18,13 @@ The HC-SR04 ultrasonic sensor operates based on the principle of ultrasonic wave
 
 1. The ultrasound transmitter (trig pin) emits a high-frequency sound, typically at 40 kHz.
 
-2. This emitted sound travels through the air, and upon encountering an object, it reflects back towards the module.
+2. This emitted sound travels through the air and, upon encountering an object, reflects back towards the module.
 
-3. The echo pin, serving as the ultrasound receiver, picks up the reflected sound, also known as the echo.
+3. The echo pin, the ultrasound receiver, picks up the reflected sound, also known as the echo.
 
 <br />
 
-<img width="599" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/f86518d1-c793-419e-b255-18b7a246e207">
+<img width="663" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/43825477-c4cb-4f87-9620-d6cfacf0e07a">
 
 <br />
 
@@ -55,8 +55,6 @@ Dividing by 2 accounts for the measured time representing the total round-trip d
 * Dimension: 45 × 20 × 15 mm 
 
 For more information, check out [the HC-SR04 Ultrasonic Sensor datasheet](https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf).
-
-<br />
 
 <br />
 
@@ -128,5 +126,7 @@ These are just a few examples of the many applications of HC-SR04 ultrasonic sen
 <br />
 
 ## Reference
-* [Random Nerd Tutorials](https://randomnerdtutorials.com/micropython-hc-sr04-ultrasonic-esp32-esp8266/)
+
 * [FLAG](https://www.flag.com.tw/maker/FM622A)
+* [Random Nerd Tutorials](https://randomnerdtutorials.com/micropython-hc-sr04-ultrasonic-esp32-esp8266/)
+
