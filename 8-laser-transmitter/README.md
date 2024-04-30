@@ -19,8 +19,6 @@ The KY-008 Laser Transmitter is a small module commonly used in hobbyist electro
 
 <br />
 
-<br />
-
 ## Connection Table
 
 For KY-008 Laser Transmitter
@@ -66,21 +64,25 @@ For Buzzer:
 
 <br />
 
-<img width="612" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/2115376e-a0f6-46e8-ad0f-ad503cd9e1ae">
+<img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/2115376e-a0f6-46e8-ad0f-ad503cd9e1ae">
 
 <br />
 
 <br />
 
-## Result
+## Results
 
 ### Shooting Game
 
 We employ a KY-008 laser transmitter for a shooting game, using the BH170 light sensor as a designated target. Each successful hit on the target accrues one point for the user. 
 
+<br />
+
 ![shooting-game-hit](https://github.com/luluwu516/ESP32/assets/98475122/2dc4aeeb-e233-42be-911f-6d6975c4653f)
 
 Victory in the game is achieved upon reaching a score of ten points.
+
+<br />
 
 ![shooting-game-win](https://github.com/luluwu516/ESP32/assets/98475122/50e44a17-4405-45cd-832a-6721a6030dba)
 
@@ -90,16 +92,22 @@ Victory in the game is achieved upon reaching a score of ten points.
 
 The KY-008 laser transmitter can be effectively integrated into an anti-theft system. Activation of the device is initiated by directing the laser toward the light sensor.
 
+<br />
+
 ![anti-theft-setting](https://github.com/luluwu516/ESP32/assets/98475122/53d0083f-9297-46a2-9e05-9650fab2c263)
+
+<br />
 
 Following configuration, reminiscent of scenes from the movie "Mission: Impossible," any obstruction of the laser beam triggers the alarm, signaling a potential security breach.
 
+<br />
+
 ![anti-theft-on](https://github.com/luluwu516/ESP32/assets/98475122/4a5e87ed-0f12-483a-9c57-436303bef72a)
 
-<br />
 
 <br />
 
-## Reference
+## References
+
 * [FLAG](https://www.flag.com.tw/maker/FM636A)
 * [Arduino Modules](https://arduinomodules.info/ky-008-laser-transmitter-module/)
