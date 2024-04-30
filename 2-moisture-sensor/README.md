@@ -1,12 +1,28 @@
 # LM393 Soil Moisture Detect Sensor
 
-The LM393 soil moisture detection sensor serves the purpose of detecting the moisture level in soil, providing crucial data for automated irrigation systems, plant health monitoring, and other applications where soil moisture content is a critical factor.
+The LM393 soil moisture detection sensor is a simple yet effective electronic device to measure soil moisture content. It typically consists of two main components: the LM393 comparator chip and the moisture-sensing probe. 
+* The LM393 comparator chip includes two voltage comparator integrated circuits. It compares two voltage inputs and determines which one is greater. The soil moisture sensor compares the resistance of the soil with a reference voltage.
+* The moisture-sensing probe usually comprises two electrodes inserted into the soil. As the moisture content in the soil changes, so does its electrical conductivity. The probe measures this conductivity, which is then converted into a voltage signal.
 
-When I return to Taiwan for a few weeks, I always ask my friends to take care of my plants. When I first learned ESP32, I aimed to build an automated watering system. Here is my first step.
+<br />
 
 <img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/25824f1c-aec8-4ee4-8b8d-030eeea63d6c">
 
 <br />
+
+<br />
+
+## Features
+
+* Operating Voltage: 3.3V to 5V DC
+* Operating Current: 15mA
+* Output Digital - 0V to 5V, Adjustable trigger level from preset
+* Output Analog - 0V to 5V based on infrared radiation from fire flame falling on the sensor
+* LEDs indicating output and power
+* PCB Size: 3.2cm x 1.4cm
+* Easy to use with Microcontrollers or even with normal Digital/Analog IC
+
+For more information, check out [the LM393 Soil Moisture Detect Sensor datasheet](https://www.smart-prototyping.com/image/data/SKU%20Photos/10100012/lm393-n.pdf).
 
 <br />
 
@@ -21,6 +37,8 @@ For Soil Moisture Detect Sensor:
 | DO          | Digital Output | -             |
 | AO          | Analog Output  | VP 36         |
 
+<br />
+
 For OLED display:
 
 | OLED        | Meaning     | ESP32         |
@@ -29,6 +47,8 @@ For OLED display:
 | GND         | Ground      | GND           |
 | SCL         | Clock line  | 22 SCL        |
 | SDA         | Data line   | 21 SDA        |
+
+<br />
 
 <img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/37b5347e-630b-4d3e-9cd9-d75617f20d3f">
 
@@ -41,6 +61,9 @@ For OLED display:
 > On the ESP32, ADC functionality is available on pins 32-39 (ADC block 1) and pins 0, 2, 4, 12-15, and 25-27 (ADC block 2).
 
 To read voltages above the reference voltage, apply input attenuation with the atten keyword argument.
+
+### Input Attenuation
+
 | Constant         | Input Attenuation                   | 
 | :---             |    :----                            | 
 | ADC.ATTN_0DB     | No attenuation (100mV - 950mV)      |
@@ -50,7 +73,7 @@ To read voltages above the reference voltage, apply input attenuation with the a
 
 <br />
 
-Resolutions
+### Resolutions
 
 | Constant         | Resolutions         | 
 | :---             |    :----            | 
@@ -61,7 +84,7 @@ Resolutions
 
 <br />
 
-## Result
+## Results
 
 The sensor operates on the principle of electrical conductivity. It measures the resistance between two electrodes inserted into the soil. Moist soil conducts electricity better, resulting in lower resistance. Conversely, dry soil has higher resistance. The sensor detects these resistance changes and translates them into moisture levels.
 
@@ -75,8 +98,14 @@ Air has a higher resistance. The display showed 511 Ohm (Ω), the maximum value 
 
 <br />
 
-I can use the analog output value to control the water pump and build an automated watering system. Wish me luck!
+## Brief Summary
+
+The LM393 soil moisture detection sensor is fundamental in discerning soil moisture levels, offering indispensable insights for automated irrigation systems, plant vitality assessment, and various applications reliant on precise soil moisture analysis.
+
+<br />
 
 ## Reference
 * [FLAG](https://www.flag.com.tw/maker/FM636A)
+* [Components 101](https://components101.com/modules/soil-moisture-sensor-module)
 * [MicroPyhon](https://docs.micropython.org/en/latest/esp32/quickref.html)
+
