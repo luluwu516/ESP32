@@ -40,8 +40,6 @@ For more information, check out [the BH1750 sensor datasheet](https://datasheet.
 
 <br />
 
-<br />
-
 ## Measurement Modes
 
 In MicroPython, the BH1750 light sensor library provides different measurement modes for various application needs. These modes allow us to configure the sensor to provide measurements with different resolutions and measurement times. 
@@ -53,8 +51,6 @@ In MicroPython, the BH1750 light sensor library provides different measurement m
 | 0x20      | High Resolution Mode 1  | 1 lux        | 120 ms             |
 | 0x21      | High Resolution Mode 2  | 0.5 lux      | 120 ms             |
 | 0x23      | Low Resolution Mode     | 4 lux        | 16 ms              |
-
-<br />
 
 <br />
 
@@ -99,15 +95,13 @@ For Buzzer:
 
 <br />
 
-<br />
-
 ## Result
 
-First, I applied the BH1750 library and created a light sensor that detects the illumination (light-sensor.py). It worked perfectly. 
+Initially, I implemented the BH1750 library to establish a light sensor capable of detecting illumination levels (light-sensor.py). The functionality was successfully validated.
 
 <br />
 
-Then, I added a buzzer in my light sensor system to create an inadequate illumination alarm (inadequate-illumination-alarm.py). The alarm only displays the light level when the room is bright enough. 
+Subsequently, I integrated a buzzer within the light sensor framework to establish an inadequate illumination alarm system (inadequate-illumination-alarm.py). This alarm system operates by displaying the light level when the ambient illumination surpasses a predefined threshold. 
 
 <img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/0a8d2339-b349-4c10-8cd0-6adad8d14c3d">
 
@@ -115,7 +109,7 @@ Then, I added a buzzer in my light sensor system to create an inadequate illumin
 
 <br />
 
-If the room is too dark, the buzzer alarms to alert the user to get more light. 
+When the ambient light falls below the established threshold, indicating inadequate illumination, the buzzer activates to alert the user to augment the lighting conditions.
 
 <img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/dad016e6-0eb0-4b52-bcc2-b53b6885ae36">
 
@@ -123,9 +117,9 @@ If the room is too dark, the buzzer alarms to alert the user to get more light.
 
 <br />
 
-We set the alarm condition to be 30 < light_level < 300, so when the user turns off the light, the buzzer will not alarm. 
+To ensure the alarm's efficacy, the condition for activation was set within the range of 30 < light_level < 300. Consequently, the buzzer remains silent when the ambient light levels plummet to an inadequate point, such as when the room lighting is extinguished.
 
-(I used my flashlight to cover the sensor, pretending the user turned off the light.)
+(Note: During testing, a flashlight was utilized to simulate the absence of ambient light, triggering the buzzer to remain silent.)
 
 <img width="400" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/28671c2d-ac48-4b54-bf4a-d9a3c0e970f7">
 
@@ -137,7 +131,6 @@ We set the alarm condition to be 30 < light_level < 300, so when the user turns 
 
 The BH1750 light sensor's precision in measuring ambient light intensity finds widespread application across various fields, including Automatic Brightness Adjustment, Smart Lighting Systems, and IoT. Its exacting measurement capabilities render it indispensable in contemporary electronic devices and systems.
 
-<br />
 
 <br />
 
