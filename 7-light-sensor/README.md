@@ -4,7 +4,7 @@ The BH1750 is a digital ambient light sensor renowned for its precise measuremen
 
 <br />
 
-<img width="800" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/fcbb6ab2-8819-4de5-b220-1acab0ea555b">
+<img width="860" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/3b896b19-0acd-4f9e-9523-95f177a6b7ff">
 
 <br />
 
