@@ -1,12 +1,41 @@
 from machine import Pin, SoftI2C
 from ssd1306 import SSD1306_I2C
 
-i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
+# Constants
+OLED_WIDTH = 128
+OLED_HEIGHT = 64
 
-oled_width = 128
-oled_height = 64
-oled = SSD1306_I2C(oled_width, oled_height, i2c)
+# Pin
+I2C_SCL_PIN = 22
+I2C_SDA_PIN = 21
 
-oled.text("Hello, world!", 0, 0)
-oled.show()
 
+def setup():
+    try:
+        # oled
+        i2c = SoftI2C(scl=Pin(I2C_SCL_PIN), sda=Pin(I2C_SDA_PIN))
+        oled = SSD1306_I2C(OLED_WIDTH, OLED_HEIGHT, i2c)
+        return oled
+
+    except Exception as e:
+        print("Error initializing OLED:", e)
+        return None
+
+
+def display_message(oled, message, x=0, y=0):
+    try:
+        oled.text(message, x, y)
+        oled.show()
+
+    except Exception as e:
+        print("Error displaying message on OLED:", e)
+
+
+def main():
+    oled = setup()
+    if oled:
+        display_message(oled, "Hello, world!")
+
+
+if __name__ == "__main__":
+    main()

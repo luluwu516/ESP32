@@ -2,28 +2,25 @@ import bh1750
 from machine import Pin, PWM, SoftI2C
 from ssd1306 import SSD1306_I2C
 
+
+# Constants
+OLED_WIDTH = 128
+OLED_HEIGHT = 64
+LOW_LIGHT_THRESHOLD = 30
+HIGH_LIGHT_THRESHOLD = 300
+
 # Pin Definitions
 SCL_PIN = 22
 SDA_PIN = 21
 BUZZER_PIN = 16
 
-# OLED Display Dimensions
-OLEDC_WIDTH = 128
-OLEDC_HEIGHT = 64
-
-# Light Level Thresholds
-LOW_LIGHT_THRESHOLD = 30
-HIGH_LIGHT_THRESHOLD = 300
-
 
 def setup():
-    # Initialize I2C
+    # oled
     i2c = SoftI2C(scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
+    oled = SSD1306_I2C(OLED_WIDTH, OLED_HEIGHT, i2c)
 
-    # Initialize OLED Display
-    oled = SSD1306_I2C(OLEDC_WIDTH, OLEDC_HEIGHT, i2c)
-
-    # Initialize Buzzer
+    # buzzer
     buzzer = PWM(Pin(BUZZER_PIN, Pin.OUT), freq=110, duty=0)
 
     return i2c, oled, buzzer

@@ -1,51 +1,74 @@
-import network, urequests, utime
+from wifi import *  # the module store my wifi info
+import network
+import urequests
+import utime
 from ssd1306 import SSD1306_I2C
 from machine import Pin, ADC, SoftI2C
 
-# OLED
-i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
-oled_width = 128
-oled_height = 64
-oled = SSD1306_I2C(oled_width, oled_height, i2c)
+# Constants
+OLED_WIDTH = 128
+OLED_HEIGHT = 64
+SSID = REPLACE_WITH_YOUR_SSID
+PASSWORD = REPLACE_WITH_YOUR_PASSWORD
+KEY = REPLACE_WITH_YOUR_KEY
+EVENT_NAME = REPLACE_WITH_YOUR_EVENT_NAME
+IFTTT_URL = "https://maker.ifttt.com/trigger/{}/with/key/{}".format(EVENT_NAME, KEY)
+
+# Pin
+ADC_PIN = 36
+I2C_SCL_PIN = 22
+I2C_SDA_PIN = 21
+
+# oled
+i2c = SoftI2C(scl=Pin(I2C_SCL_PIN), sda=Pin(I2C_SDA_PIN))
+oled = SSD1306_I2C(OLED_WIDTH, OLED_HEIGHT, i2c)
+
+# sensor
+adc_pin = Pin(ADC_PIN)
+adc = ADC(adc_pin)
+adc.width(ADC.WIDTH_9BIT)
+adc.atten(ADC.ATTN_11DB)
 
 
-# Sensor
-adc_pin = Pin(36)          # VP pin
-adc = ADC(adc_pin)         # set input
-adc.width(ADC.WIDTH_9BIT)  # set resolutions
-adc.atten(ADC.ATTN_11DB)   # set attenuation
+def connect_to_wifi():
+    print("Connecting to WiFi " + SSID + "...")
+    sta = network.WLAN(network.STA_IF)
+    sta.active(True)
+    sta.connect(SSID, PASSWORD)
 
-    
-# Network
-ssid = "REPLACE_WITH_YOUR_SSID"
-pw = "REPLACE_WITH_YOUR_PASSWORD"
-key = "REPLACE_WITH_YOUR_KEY"
-url = "https://maker.ifttt.com.com/trigger/YOUR_EVENT_NAME/with/key/" + key
+    while not sta.isconnected():  # Check connection
+        pass
+    print("Connected.")
 
-print("Connecting to WiFi " + ssid + "...")
-sta = network.WLAN(network.STA_IF)
-sta.active(True)
-sta.connect(ssid, pw)
 
-while not sta.isconnected():  # check connection
-    pass
-
-print("Connected.")
-
-while True:
-    gsr = adc.read()
-    
-    if gsr > 200:
-        response = urequests.get(url)
+def send_to_ifttt(data):
+    try:
+        response = urequests.get(IFTTT_URL, params={"value": data})
         if response.status_code == 200:
             print("IFTTT Success: Sending messages on Line")
         else:
             print("IFTTT Failed")
-        utime.sleep(5)
-    
-    oled.fill(0)
-    oled.text("Resistance: ", 0, 0)
-    oled.text(str(gsr) + " Ohm", 0, 16)
-    oled.show()
-    
-    utime.sleep_ms(100)
+    except Exception as e:
+        print("Exception occurred while sending data to IFTTT:", e)
+
+
+def main():
+    connect_to_wifi()
+
+    while True:
+        resistance = adc.read()
+
+        if resistance > 200:
+            send_to_ifttt(gsr)
+            utime.sleep(5)
+
+        oled.fill(0)
+        oled.text("Resistance: ", 0, 0)
+        oled.text(str(gsr) + " Ohm", 0, 16)
+        oled.show()
+
+        utime.sleep_ms(100)
+
+
+if __name__ == "__main__":
+    main()

@@ -4,21 +4,21 @@ from machine import Pin, PWM, SoftI2C
 from ssd1306 import SSD1306_I2C
 
 # Constants
+OLED_WIDTH = 128
+OLED_HEIGHT = 64
 LIGHT_THRESHOLD = 10000
 WATCH_INTERVAL = 1
+
+# Pins
 BUZZER_PIN = 16
 SCL_PIN = 22
 SDA_PIN = 21
-OLEDC_WIDTH = 128
-OLEDC_HEIGHT = 64
 
 
 def setup():
-    # Initialize I2C
     i2c = SoftI2C(scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
+    oled = SSD1306_I2C(OLED_WIDTH, OLED_HEIGHT, i2c)
 
-    # Initialize OLED Display
-    oled = SSD1306_I2C(OLEDC_WIDTH, OLEDC_HEIGHT, i2c)
     return i2c, oled
 
 
@@ -30,13 +30,11 @@ def turn_on_buzzer(buzzer, level):
 
 
 def main():
-    # Initialize buzzer
+    # buzzer
     buzzer = PWM(Pin(BUZZER_PIN, Pin.OUT), freq=110, duty=0)
 
-    # Setup I2C and OLED
     i2c, oled = setup()
 
-    # Turn on the anti-theft laser
     count = 0
     while count < 5:
         light_level = bh1750.sample(i2c, mode=0x23)

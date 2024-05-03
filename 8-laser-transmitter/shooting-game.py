@@ -6,11 +6,8 @@ from ssd1306 import SSD1306_I2C
 # Constants
 LIGHT_THRESHOLD = 10000
 SCORE_LIMIT = 10
-BUZZER_PIN = 16
-SCL_PIN = 22
-SDA_PIN = 21
-OLEDC_WIDTH = 128
-OLEDC_HEIGHT = 64
+OLED_WIDTH = 128
+OLED_HEIGHT = 64
 BUZZER_FREQ_HIT = 784
 BUZZER_FREQ_WIN = 659
 BUZZER_FREQ_LOSE = 523
@@ -20,14 +17,18 @@ WIN_DELAY = 100
 LOSE_DELAY = 300
 LOOP_DELAY = 10
 
+# Pins
+BUZZER_PIN = 16
+SCL_PIN = 22
+SDA_PIN = 21
+
 
 def setup():
-    # Initialize I2C
     i2c = SoftI2C(scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
+    oled = SSD1306_I2C(OLED_WIDTH, OLED_HEIGHT, i2c)
+    buzzer = PWM(Pin(BUZZER_PIN, Pin.OUT), freq=BUZZER_FREQ_HIT, duty=0)
 
-    # Initialize OLED Display
-    oled = SSD1306_I2C(OLEDC_WIDTH, OLEDC_HEIGHT, i2c)
-    return i2c, oled
+    return i2c, oled, buzzer
 
 
 def hit_buzzer(buzzer, frequency, duty_cycle, duration):
@@ -38,11 +39,8 @@ def hit_buzzer(buzzer, frequency, duty_cycle, duration):
 
 
 def main():
-    # Initialize buzzer
-    buzzer = PWM(Pin(BUZZER_PIN, Pin.OUT), freq=BUZZER_FREQ_HIT, duty=0)
-
-    # Setup I2C and OLED
-    i2c, oled = setup()
+    # setup
+    i2c, oled, buzzer = setup()
 
     # Game loop
     score = 0

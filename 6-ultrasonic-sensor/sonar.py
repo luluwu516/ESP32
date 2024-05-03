@@ -3,25 +3,46 @@ from ssd1306 import SSD1306_I2C
 from hcsr04 import HCSR04
 import utime
 
+# Constants
+OLED_WIDTH = 128
+OLED_HEIGHT = 64
+ECHO_TIMEOUT_US = 10000
+
+# Pins
+SCL_PIN = 22
+SDA_PIN = 21
+TRIGGER_PIN = 5
+ECHO_PIN = 18
+
 # oled
-i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
-oled_width = 128
-oled_height = 64
-oled = SSD1306_I2C(oled_width, oled_height, i2c)
+i2c = SoftI2C(scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
+oled = SSD1306_I2C(OLED_WIDTH, OLED_HEIGHT, i2c)
 
 # sonar
-sonar = HCSR04(trigger_pin=5, echo_pin=18, echo_timeout_us=10000)
+sonar = HCSR04(
+    trigger_pin=TRIGGER_PIN, echo_pin=ECHO_PIN, echo_timeout_us=ECHO_TIMEOUT_US
+)
 
 
-while True:
-    distance = sonar.distance_cm()
+def update_display(distance):
     oled.fill(0)
     oled.text("Distance: ", 0, 0)
-    if distance > 400 or distance < 2:
-        oled.text("Out of range!", 0, 16)
-    else:
+    if 2 <= distance <= 400:
         oled.text(str(distance) + " cm", 0, 16)
+    else:
+        oled.text("Out of range!", 0, 16)
     oled.show()
-    
-    utime.sleep_ms(25)
-    
+
+
+def main():
+    while True:
+        try:
+            distance = sonar.distance_cm()
+            update_display(distance)
+        except Exception as e:
+            print("Error:", e)  # Handle the exception gracefully
+        utime.sleep_ms(25)
+
+
+if __name__ == "__main__":
+    main()
