@@ -87,7 +87,7 @@ For Buzzer:
 
 <br />
 
-<img width="406" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/6f9166cb-260e-4d87-8939-92c7f499b3bd">
+<img width="406" alt="image" src="https://github.com/luluwu516/ESP32/assets/98475122/5ea5d5dc-94aa-4651-a55b-136df6d63bdc">
 
 <br />
 
