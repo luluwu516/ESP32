@@ -2,7 +2,7 @@
 
 The 0.96-inch SSD1306 OLED display is a compact and versatile module that utilizes OLED (Organic Light Emitting Diode) technology to provide clear, bright, high-contrast visuals. The SSD1306 controller chip, integrated within the display, enables seamless communication with microcontrollers and other devices.
 
-<img width="400" alt="OLED" src="https://github.com/luluwu516/ESP32/assets/98475122/7f94f895-4b66-448e-934f-dc1c7b27d4d6">
+<img width="400" alt="OLED" src="https://github.com/luluwu516/ESP32/assets/98475122/3fece805-0f28-4363-ba9e-b1b84571edba">
 
 </br>
 
