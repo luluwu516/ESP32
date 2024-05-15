@@ -19,7 +19,7 @@ The BH1750 is a digital ambient light sensor renowned for its precise measuremen
 * Low Current by power down function
 * 50Hz/60Hz Light noise reject-function
 * 1.8V Logic input interface
-* No need any external parts
+* No need for any external parts
 * Light source dependency is little. (ex. Incandescent Lamp. Fluorescent Lamp. Halogen Lamp. White LED. Sun Light)
 * It is possible to select 2 types of I2C slave-address.
 * Adjustable measurement result for the influence of optical window (It is possible to detect min. 0.11 lux, max. 100000 lux by using this function.)
@@ -54,7 +54,7 @@ In MicroPython, the BH1750 light sensor library provides different measurement m
 
 <br />
 
-## Connection Table
+## Connection Tables
 
 For BH1750 Light Sensor:
 
@@ -95,7 +95,7 @@ For Buzzer:
 
 <br />
 
-## Result
+## Results
 
 Initially, I implemented the BH1750 library to establish a light sensor capable of detecting illumination levels (light-sensor.py). The functionality was successfully validated.
 
@@ -134,6 +134,7 @@ The BH1750 light sensor's precision in measuring ambient light intensity finds w
 
 <br />
 
-## Reference
+## References
+
 * [FLAG](https://www.flag.com.tw/maker/FM636A)
 * [Random Nerd Tutorials](https://randomnerdtutorials.com/esp32-bh1750-ambient-light-sensor/)
