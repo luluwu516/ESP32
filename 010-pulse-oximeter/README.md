@@ -162,8 +162,11 @@ Before and after, using the same synthetic test signal:
 | SpO2 reading | 0 % always | 95.14 % (expected 95.05 %) |
 | Heart rate | 0.0 | 75.0 bpm (expected 75.0) |
 | Useful readings | 0.08 % of updates | 97.4 % |
-| Time to first reading | 12 seconds | ~1 heartbeat |
+| Time to first SpO2 reading | 12.0 s | 0.8 s (1 heartbeat) |
+| Time to first heart rate | 12.4 s | 3.6 s (5 heartbeats) |
 | Pulse strength (good contact) | 0.34 % | 1.62 % |
+
+Timings come from the 75 bpm synthetic signal, where one beat is 800 ms. SpO2 needs a single complete pulse cycle, so it appears after one beat. Heart rate averages over `target_n_beats = 5` before it reports, which is why the first few seconds always show `HR: 0.0`. At a slower resting rate, the wait grows: 5.0 s at 60 bpm, 5.3 s at 57 bpm.
 
 <br />
 
