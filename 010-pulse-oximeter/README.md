@@ -147,6 +147,8 @@ Heart rate needs five consecutive beats before it reports, so the first few seco
 
 ## Results
 
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/fdaa4e3e-7c82-4aef-a084-8c2982aa1b15" />
+
 A full run of `spo2.py`, printing once a second, from soft reboot to `Ctrl-C`:
 
 ```
