@@ -147,13 +147,31 @@ Heart rate needs five consecutive beats before it reports, so the first few seco
 
 ## Results
 
-Working output from the device, once a second:
+A full run of `spo2.py`, printing once a second, from soft reboot to `Ctrl-C`:
 
 ```
-SpO2: 94.5 %   HR: 0.0
-SpO2: 99.0 %   HR: 57.1
-SpO2: 99.0 %   HR: 57.1
+MPY: soft reboot
+SpO2: 0 % HR: 0.0
+SpO2: 0 % HR: 0.0
+SpO2: 0 % HR: 0.0
+SpO2: 99.09847 % HR: 0.0
+SpO2: 98.41518 % HR: 0.0
+SpO2: 98.97713 % HR: 57.94862
+SpO2: 98.87823 % HR: 57.94862
+SpO2: 98.98921 % HR: 57.94862
+SpO2: 99.04211 % HR: 57.94862
+SpO2: 98.73403 % HR: 71.94244
+SpO2: 99.05496 % HR: 71.94244
+SpO2: 98.91346 % HR: 71.94244
+SpO2: 98.93148 % HR: 71.94244
+Sensor shut down
 ```
+
+Three things to read from that trace:
+
+* The first three seconds report `0 %` as the finger settles. The tissue is still compressing, and the baseline drifts faster than the DC tracker can follow, so the beat detector has nothing stable to lock onto.
+* SpO2 arrives about two seconds before heart rate. SpO2 requires one complete pulse cycle; heart rate first averages five beats.
+* Heart rate steps from 57.9 to 71.9 bpm partway through. A five-beat average shifts in jumps like this, and a single missed or doubled beat moves it noticeably. SpO2 over the same window stays within 98.4 to 99.1 %, which is the steadier of the two readings.
 
 Before and after, using the same synthetic test signal:
 
@@ -167,6 +185,8 @@ Before and after, using the same synthetic test signal:
 | Pulse strength (good contact) | 0.34 % | 1.62 % |
 
 Timings come from the 75 bpm synthetic signal, where one beat is 800 ms. SpO2 needs a single complete pulse cycle, so it appears after one beat. Heart rate averages over `target_n_beats = 5` before it reports, which is why the first few seconds always show `HR: 0.0`. At a slower resting rate, the wait grows: 5.0 s at 60 bpm, 5.3 s at 57 bpm.
+
+On real hardware, the wait runs longer than these figures, as the trace above shows. The synthetic signal has a steady baseline from the first sample, while a real finger keeps compressing for several seconds after it lands on the sensor.
 
 <br />
 
