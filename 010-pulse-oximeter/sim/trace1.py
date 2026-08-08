@@ -7,15 +7,34 @@ already shifted right by 3 by fifo_bytes_to_int(). 120 samples = 2.4 s.
 
 Measured characteristics, de-trended with alpha=0.99 rather than raw
 peak-to-peak - the raw figure is dominated by baseline drift and badly
-overstates the pulse:
-    IR   pulsatile AC   54.8 counts, DC 16226, perfusion 0.338 %
-    RED  pulsatile AC   61.6 counts, DC 13515, perfusion 0.456 %
+overstates the pulse. These are residual amplitudes, not pulse amplitudes;
+see the periodicity note below before treating either as a heartbeat:
+    IR   residual  54.8 counts, DC 16227, 0.338 % of DC
+    RED  residual  61.6 counts, DC 13515, 0.456 % of DC
 
-Periodicity, from the autocorrelation of the de-trended IR channel over
+Periodicity, from the autocorrelation of each de-trended channel over
 lag 15-69 (200 down to 43 bpm):
-    lag=39 -> 77 bpm, but r=0.21 is weak. A period is present and
-    physiologically plausible, yet the waveform is too noisy to call it
-    a dependable heart-rate reference.
+    IR   lag=39 -> 77 bpm, r=0.21. Weak, but the period is where a
+         resting heart rate belongs. Under a 0.5-5 Hz band-pass it
+         sharpens to lag=40 at r=0.38.
+    RED  lag=15 -> 200 bpm, r=0.47. The high r is misleading: lag 15 is
+         the bottom of the search range, so the true peak may lie outside
+         it, and 200 bpm is not a resting rate in any case. The band-pass
+         drops it to r=0.20 while leaving the lag pinned to the boundary.
+         There is no heartbeat in this channel, only contact noise.
+
+Read the two together and the red channel is the louder of the two while
+carrying no pulse at all. Red sits on a lower DC (13515 against 16227),
+so an equal absolute disturbance is a larger fraction of its baseline.
+Taking the amplitudes at face value gives R = 1.350 and SpO2 = 53.7 %,
+which the same finger contradicts minutes later at 99 %. An implausible
+SpO2 is the cheapest signal that a measurement is noise.
+
+The channels are not swapped here. All three captures put field 0 near
+16300 and field 1 near 13800, a ratio of 1.18-1.20 that never inverts,
+and 880 nm infrared loses less in tissue than 660 nm red at the same
+25.4 mA drive, so the larger of the two is infrared. The red/IR swap in
+the driver was already fixed before any of these captures were recorded.
 
 Use: the hardest sample. The one-pole DC follower fails on it at both
 alpha=0.99 and alpha=0.95, producing no reading at all, so it is the
