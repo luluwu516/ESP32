@@ -1,94 +1,7 @@
 from max30102 import MAX30102
 from utime import ticks_ms, ticks_diff
-
-
-class IIR_filter(object):
-    def __init__(self, alpha):
-        # self.old_value = 0
-        self.old_value = None
-        self.alpha = alpha
-
-    def step(self, value):
-        # base line
-        if self.old_value is None:
-            self.old_value = value
-            return value
-        
-        value = (self.old_value*self.alpha
-                 + value*(1 - self.alpha))
-        self.old_value = value
-        return value
-
-
-class AC_extractor(object):
-    def __init__(self):
-        self.max_ac = 0
-        self.min_ac = 0
-
-        self.ac = 0
-
-        self.cycle_time_mark = ticks_ms()
-        self.get_time_mark = ticks_ms()
-
-        self.is_down_period = False
-
-    def update(self, value_nodc):
-        if value_nodc > 0:
-            if self.max_ac != 0 and self.min_ac != 0:
-                self.is_down_period = False
-                time_intval = ticks_diff(ticks_ms(), self.cycle_time_mark)
-                if 2000 > time_intval > 270:
-                    self.ac = self.max_ac - self.min_ac
-                    self.get_time_mark = ticks_ms()
-                self.max_ac = 0
-                self.min_ac = 0
-                
-                self.cycle_time_mark = ticks_ms()
-            else:
-                if value_nodc > self.max_ac:
-                    self.max_ac = value_nodc
-        elif value_nodc < 0 and self.max_ac != 0:
-            self.is_down_period = True
-            if value_nodc < self.min_ac:
-                self.min_ac = value_nodc
-
-    def reset_ac(self):
-        self.ac = 0
-
-
-class HR_calculator(object):
-    def __init__(self, target_n_beats=5):
-        self.target_n_beats = target_n_beats
-        self.n_beats = 0
-
-        self.heart_rate = 0.0
-
-        self.tot_intval = 0
-
-        self.beat_time_mark = ticks_ms()
-
-        self.is_beating = False
-
-    def update(self, is_beating):
-        if self.is_beating == False and is_beating == True:
-            rr_intval = ticks_diff(ticks_ms(), self.beat_time_mark)
-            if 2000 > rr_intval > 270:
-                self.n_beats += 1
-                self.tot_intval += rr_intval
-                if self.n_beats == self.target_n_beats:
-                    tot_intval = self.tot_intval/1000
-                    self.heart_rate = self.target_n_beats/(tot_intval/60)
-                    self.tot_intval = 0
-                    self.n_beats = 0
-            else:
-                self.tot_intval = 0
-                self.n_beats = 0
-
-            self.beat_time_mark = ticks_ms()
-        self.is_beating = is_beating
-
-    def get_heart_rate(self):
-        return self.heart_rate
+from filters import IIR_filter
+from detectors import AC_extractor, Rate_calculator
 
 
 class Pulse_oximeter(object):
@@ -113,12 +26,12 @@ class Pulse_oximeter(object):
         self.dc_remover_ir = IIR_filter(0.95)  # adjust to 0.95
         self.dc_remover_red = IIR_filter(0.95)
 
-        self.hr_calculator = HR_calculator()
+        self.hr_calculator = Rate_calculator()
 
     def update(self):
         # self.spo2 = 0  # bug!
         self.sensor.check()
-        if (self.sensor.available()):
+        if self.sensor.available():
             self.is_available = True
             self.raw_ir = self.sensor.pop_ir_from_storage()
             self.raw_red = self.sensor.pop_red_from_storage()
@@ -142,14 +55,14 @@ class Pulse_oximeter(object):
             self.is_beating = self.ac_extractor_ir.is_down_period  # change to ir
 
             self.hr_calculator.update(self.is_beating)
-            self.heart_rate = self.hr_calculator.get_heart_rate()
+            self.heart_rate = self.hr_calculator.get_rate()
 
             ir_red_intval = abs(ticks_diff(time_mark_ir, time_mark_red))
             if ir_ac > 0 and red_ac > 0:
                 if ir_red_intval < 100:
-                    ratio = (red_ac/red_dc)/(ir_ac/ir_dc)
-                    self.spo2 = -45.060*ratio**2 + 30.354*ratio + 94.845
-                
+                    ratio = (red_ac / red_dc) / (ir_ac / ir_dc)
+                    self.spo2 = -45.060 * ratio**2 + 30.354 * ratio + 94.845
+
                 self.ac_extractor_ir.reset_ac()
                 self.ac_extractor_red.reset_ac()
         else:
@@ -169,5 +82,3 @@ class Pulse_oximeter(object):
 
     def get_heart_rate(self):
         return self.heart_rate
-
-
