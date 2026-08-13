@@ -10,9 +10,6 @@ class CircularBuffer(object):
     def __len__(self):
         return len(self.data)
 
-    def is_empty(self):
-        return not bool(self.data)
-
     def append(self, item):
         try:
             self.data.append(item)
@@ -27,35 +24,3 @@ class CircularBuffer(object):
     def clear(self):
         self.data = deque((), self.max_size, True)
 
-    def pop_head(self):
-        buffer_size = len(self.data)
-        if buffer_size == 0:
-            return 0
-        elif buffer_size == 1:
-            return self.data.popleft()
-        else:
-            temp = []
-            head = self.data.popleft()
-            
-            while self.data:
-                temp.append(self.data.popleft())
-            
-            for item in temp:
-                self.data.append(item)
-                
-            return head
-    
-    """
-    def pop_head(self):
-        buffer_size = len(self.data)
-        temp = self.data
-        if buffer_size == 1:
-            pass
-        elif buffer_size > 1:
-            self.data.clear()
-            for x in range(buffer_size - 1):
-                self.data = temp.popleft()
-        else:
-            return 0
-        return temp.popleft()
-    """

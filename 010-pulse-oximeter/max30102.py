@@ -591,25 +591,7 @@ class MAX30102(object):
         number_of_samples = len(self.sense.ir)
         return number_of_samples
 
-    # Get a new IR value
-    def get_ir(self):
-        # Check the sensor for new data for 250ms
-        if self.safe_check(250):
-            return self.sense.ir.pop_head()
-        else:
-            # Sensor failed to find new data
-            return 0
-
-    # Get a new red value
-    def get_red(self):
-        # Check the sensor for new data for 250ms
-        if self.safe_check(250):
-            return self.sense.red.pop_head()
-        else:
-            # Sensor failed to find new data
-            return 0
-
-    # Note: the following 3 functions are the equivalent of using 'getFIFO'
+    # Note: the following functions are the equivalent of using 'getFIFO'
     # methods of the SparkFun library
 
     # Pops the next IR value in storage (if available)
@@ -625,13 +607,6 @@ class MAX30102(object):
             return 0
         else:
             return self.sense.red.pop()
-
-    # (useless - for comparison purposes only)
-    def next_sample(self):
-        if self.available():
-            # With respect to the SparkFun library, using a deque object 
-            # allows us to avoid manually advancing of the tail
-            return True
 
     # Polls the sensor for new data
     def check(self):

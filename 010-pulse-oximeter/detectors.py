@@ -10,11 +10,6 @@
 
 from utime import ticks_ms, ticks_diff
 
-# (min_period_ms, max_period_ms). Intervals outside the window are rejected
-# as noise rather than counted as a cycle.
-PERIODS = {"pulse": (270, 2000), "respiration": (1500, 10000)}
-
-
 class AC_extractor(object):
     """Peak-to-peak amplitude of the last cycle, plus the cycle phase.
 
