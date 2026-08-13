@@ -8,9 +8,17 @@ The AD8232 is an integrated front end for measuring the heart's electrical activ
 
 > This is an AI-assisted project. I used it to learn more in detail.
 
+<img width="400" alt="AD8232 front" src="https://github.com/user-attachments/assets/e578062e-818c-4632-bb04-ea82185d5b93" />
+
+<img width="400" alt="AD8232 back" src="https://github.com/user-attachments/assets/b01f9156-ac00-4600-a38c-a85ae479ae04" />
+
+<br />
+
 <br />
 
 ## Mechanism: How does it work?
+
+<img width="400" alt="wikipedia ecg" src="https://github.com/user-attachments/assets/3ad3c23f-d1dd-4827-bc8d-6603a7657346" />
 
 An electrical conduction system drives the heart. Each cycle produces three features that a single lead can resolve:
 
@@ -98,6 +106,9 @@ The AD8232 operates at 3.3 V. Do not feed it 5 V, since the maximum operating su
 
 I left `SDN` unconnected on purpose. Pulling it low sleeps the chip and switches off the board's LED, which otherwise stays lit whenever the electrodes lose contact. Safety depends on the breakout: a pull-up resistor between `SDN` and VCC makes GPIO control fine, while a hard-wired connection to VCC turns a low output into a short across the supply. Measure the resistance between `SDN` and `3.3V` with the board unpowered to tell the two apart. A few tens of kΩ is safe, near zero is not, and a 1 kΩ resistor in series with the GPIO removes the risk either way. `LO+` and `LO−` already report what the LED reports, so I dropped the feature.
 
+<img width="400" alt="connection" src="https://github.com/user-attachments/assets/e46d6055-f3f5-4d0d-9586-950a19c4f2b8" />
+
+<br />
 
 <br />
 
@@ -182,7 +193,7 @@ Three things to read from it:
 
 Heart rate averages five intervals before reporting, so the first reading takes about five seconds and later ones arrive every five beats.
 
-<!-- TODO: paste a verified run with BEAT_MARGIN = 330 and BEAT_REFRACTORY = 400, one beep per beat -->
+<img width="800" alt="Results" src="https://github.com/user-attachments/assets/614f5052-d202-44b8-a91d-4bd7b21e258a" />
 
 <br />
 
@@ -196,6 +207,7 @@ Acquiring the signal worked early and well. Separating the R wave from the T wav
 
 ## References
 
+* [Wikipedia - Electrocardiography](https://en.wikipedia.org/wiki/Electrocardiography)
 * [Analog Devices, AD8232 product page](https://www.analog.com/en/products/ad8232.html)
 * [AD8232 datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/ad8232.pdf)
 * [SparkFun Single Lead Heart Rate Monitor hookup guide](https://learn.sparkfun.com/tutorials/ad8232-heart-rate-monitor-hookup-guide)
