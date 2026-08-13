@@ -115,6 +115,8 @@ Torso placement gives a larger R wave than the wrists, and it moves less. Sittin
 
 Run `ecg.py` while you position the electrodes. It prints the same 50 ms peak-hold values without beat detection, which is what you need to pick a value for `BEAT_MARGIN`. `ecg-with-buzzer.py` adds the detection, the beep, and the heart rate.
 
+`ecg-with-buzzer.py` also needs `filters.py`, shared with `010-pulse-oximeter`, for the `IIR_filter` class that tracks the baseline. Copy it to the board alongside the script.
+
 <br />
 
 ## Debugging: the double beep

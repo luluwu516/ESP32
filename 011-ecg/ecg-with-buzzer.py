@@ -1,6 +1,6 @@
 from utime import ticks_ms, ticks_diff
 from machine import Pin, ADC, PWM
-from pulse_oximeter import IIR_filter
+from filters import IIR_filter
 
 # Pin Definitions
 ADC_PIN = 36
