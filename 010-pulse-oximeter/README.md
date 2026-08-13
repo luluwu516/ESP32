@@ -204,29 +204,129 @@ On real hardware, the wait runs longer than these figures, as the trace above sh
 
 <br />
 
+## Signal Filtering
+
+Problem 7 above was fixed by retuning the one-pole DC tracker from alpha 0.99 to 0.95. That worked, and it was still a patch. This section is the durable version, which lives in `filters.py`.
+
+Splitting the code out came first. `IIR_filter` used to live in `pulse_oximeter.py`, so three other sketches were importing a general purpose filter from a module named after blood oxygen. The classes now sit in two files by what they do: `filters.py` maps one sample to one sample, `detectors.py` tracks where you are inside a cycle. Nothing in either knows about SpO2, so the period window and the corner frequencies are constructor arguments and the same code serves a pulse, a breath, or an R wave.
+
+<br />
+
+### Alpha is a frequency in disguise
+
+`IIR_filter(0.95)` says nothing about what it does. The same filter written as a corner frequency does:
+
+$$f_c = -\frac{\ln \alpha \cdot f_s}{2\pi}$$
+
+| alpha | corner frequency | in cycles per minute |
+| :--- | :--- | :--- |
+| 0.99 | 0.08 Hz | 4.8 |
+| 0.95 | 0.41 Hz | 24.5 |
+
+A resting heart is 60 cycles per minute. A tracker that corners at 4.8 was never going to follow a finger settling onto the sensor, and reading it as 0.99 gives no hint of that. `IIR_filter.from_cutoff(50, 0.41)` returns alpha 0.9498, so the two forms agree and the frequency one explains itself.
+
+<br />
+
+### The band-pass
+
+A one-pole rolls off at 6 dB per octave, which is gentle enough that a 0.25 Hz drift still gets through at half strength. `Biquad` is a second order section at 12 dB per octave, and `BandPass` puts a high-pass at 0.5 Hz in front of a low-pass at 5 Hz. That band is 30 to 300 bpm.
+
+Two sections rather than the cookbook band-pass biquad, which is built around a centre frequency and a Q. That suits a narrow band. Ours spans more than three octaves, and one section stretched that wide develops a peak instead of a flat top. Measured response of the cascade:
+
+| frequency | gain | |
+| :--- | ---: | :--- |
+| 0.05 Hz | 0.010 | drift, rejected |
+| 0.25 Hz | 0.242 | |
+| 0.50 Hz | 0.707 | corner, -3 dB |
+| 1.00 Hz | 0.969 | 60 bpm |
+| 2.00 Hz | 0.987 | |
+| 5.00 Hz | 0.700 | corner, -3 dB |
+| 15.0 Hz | 0.056 | noise, rejected |
+
+The passband sits between 0.97 and 0.99, so **the band-pass does not amplify anything**. It removes what is not the pulse. That distinction took a while to land, because the obvious expectation of a filter is that the signal gets stronger.
+
+Second order sections have to be started carefully. From zero state a 16000 count input makes the filter ring for seconds, which is bug 2 all over again. `Biquad._prime()` solves the steady state equations for the first sample and loads the result, so a constant input produces exactly zero output from the first sample with no warm-up at all.
+
+<br />
+
+### What it bought
+
+Energy in each band, before and after, as a percentage of the total:
+
+| capture | drift, pulse, noise before | after |
+| :--- | :--- | :--- |
+| trace1, poor contact | 10.2 / 84.0 / 5.8 | 4.0 / **94.0** / 1.9 |
+| trace2, good contact | 3.0 / 88.2 / 8.7 | 1.3 / **95.6** / 3.1 |
+| trace3, worst drift | 31.4 / 64.0 / 4.6 | 20.2 / **78.1** / 1.7 |
+
+The gain is largest where contact is worst, and on a good capture there is nearly nothing left to remove. That is why the change is invisible on a clean recording.
+
+Where it matters more is beat detection, because `AC_extractor` needs the signal to cross zero in both directions:
+
+| capture | one-pole, alpha 0.95 | band-pass |
+| :--- | :--- | :--- |
+| trace1 | r = 0.47, **+16 / -104** | r = 0.50, +74 / -46 |
+| trace2 | r = 0.66, +60 / -60 | r = 0.67, +77 / -43 |
+| trace3 | **r = 0.18**, +92 / -28 | **r = 0.38**, +64 / -56 |
+
+trace1 sat almost entirely on one side of zero, which is exactly the condition that stalls the beat detector. Both marginal captures come back into balance, and the good one is untouched.
+
+On an auto-scaling plot the visible effect is the pulse taking up more of the height, since drift no longer eats the vertical range: 79 to 83 % before, 92 to 102 % after.
+
+**A note on precision.** ESP32 MicroPython uses single precision floats, and biquads lose accuracy as the corner frequency approaches DC. Running the same capture in float32 and float64 differs by 0.035 counts on a 32 count signal, about 0.1 %, so 0.5 Hz at 50 Hz is comfortable. Keep `fc / fs` above roughly 0.001. Respiration at 0.1 Hz would need a lower sample rate, not a lower corner.
+
+<br />
+
+### Automatic gain control (AGC)
+
+`AGC` is the part that does make the trace taller, by dividing out a running estimate of the current amplitude. Across the three captures, perfusion spanning 6.3x comes out within 1.3x:
+
+| capture | PI | without AGC | with AGC |
+| :--- | ---: | ---: | ---: |
+| trace1 | 0.195 % | 31.7 | 189.6 |
+| trace2 | 1.228 % | 200.2 | 152.2 |
+| trace3 | 0.440 % | 71.7 | 200.0 |
+
+A weak pulse then fills the plot the same as a strong one. Two things this costs, both worth knowing before using it anywhere but a display. Amplitude information is gone, so the trace height no longer tells you anything about contact quality and it must never feed a perfusion or SpO2 calculation. And with no finger on the sensor the envelope collapses and noise gets the full gain, which is what the `floor` argument caps.
+
+The first version of this had an instant attack: any sample above the envelope became the envelope. That makes the output land on exactly the target, so every systolic peak came out as a flat plateau. Replaying captures measured 20 to 36 samples of flat top, 0.4 to 0.7 s, which erases the peak the ECG comparison needs a landmark from.
+
+The fix is an attack that is fast but not instant. At `attack_hz=0.5`, half the pulse fundamental, the 0.32 s time constant cannot follow an 80 ms upstroke:
+
+| attack | flat top | normalisation | recovery after the pulse weakens |
+| :--- | :--- | :--- | :--- |
+| instant | 20 to 36 samples | 1.04x | 1.6 s |
+| 0.5 Hz | 4 samples | 1.13x | **1.0 s** |
+
+Four samples is what the band-passed waveform's own peak measures, so nothing is being flattened. The slower attack also recovers faster and works over a wider range of beat thresholds.
+
+<br />
+
 ## PPG Waveform
 
-`ppg.py` skips the SpO2 arithmetic and prints the raw pulse waveform instead, one value per sample at 50 Hz. Thonny's Plotter draws it live. The point is to have a signal that can later be lined up against an ECG trace.
+`ppg.py` skips the SpO2 arithmetic and prints the pulse waveform instead, one value per sample at 50 Hz. Thonny's Plotter draws it live, and the on-board LED flashes on each detected beat. The point is to have a signal that can later be lined up against an ECG trace.
+
+It talks to the driver directly rather than through `Pulse_oximeter`. That class runs the whole SpO2 chain, a second DC filter, both AC extractors and the rate calculator, and this file would read one number out of it. Going direct halves the per sample work and keeps `detectors.py` out of memory.
 
 Three decisions are hiding in the following three lines:
 
 ```python
-ir = pox.get_raw_ir()
-dc = pox.dc_remover_ir.old_value     # read the DC estimate, do not advance it
-ppg = int(dc * 1.01 - ir)
+ir = sensor.pop_ir_from_storage()
+ac, dc = ppg_channel.step(ir)           # 0.5 to 5 Hz, plus a slow baseline
+ppg = int(agc.step(-ac) + AGC_TARGET)   # negated, then lifted clear of zero
 ```
 
 * **Infrared, not red.** On the two captures where both channels show a detectable pulse, band-passed infrared measures 2.6x and 1.9x the red channel. On the worst capture, red carries more energy than infrared, but none of it is a heartbeat: its autocorrelation peaks at the 200 bpm edge of the search range with r = 0.20, while infrared lands on 75 bpm at r = 0.38. Red loses first as contact degrades, which is the case worth designing around.
-* **Subtract the sample from the baseline, not the other way round.** In reflectance, the artery blocks more light at systole, so the raw count *drops* on each beat. Flipping the subtraction puts the pulse the way a reader expects it.
-* **The 1 % offset keeps the trace positive.** `ppg` can only go negative when the raw reading rises more than `dc * 0.01` above the baseline, about 163 counts at an infrared baseline of 16300. The pulse swings mostly downward, so although peak-to-peak reaches 285 counts, the largest upward excursion in any capture is 55. That leaves a factor of three in hand.
+* **Negate the AC, do not plot it as it comes.** In reflectance, the artery blocks more light at systole, so the raw count *drops* on each beat. Without the minus sign the waveform is upside down against every published PPG trace.
+* **The offset only moves the trace, it does not clip it.** Band-passed output is centred on zero, and `AGC_TARGET` lifts it to a readable place. The trough still goes negative, around -40 against a target of 100, and that is left alone. Clamping it with `max(..., 0)` would flatten the diastolic trough the same way the instant attack flattened the peak.
 
-**Note**: Reading `old_value` matters. Calling `step()` here would push the same sample through the filter a second time and disturb the DC estimate that `Pulse_oximeter` is using for SpO2.
+**Note**: `set_led_mode(2)`, not 1. The driver calls mode 1 "IR only", but `MAX30102_MODE_IR_ONLY = 0x02` is the chip's heart rate mode, which lights LED1, the red one. Mode 2 is the only setting that fills the infrared buffer this file reads. The same mislabelling caused problem 4.
 
 <br />
 
 ### What a real trace looks like
 
-Six seconds of output, 302 samples:
+Six seconds of output, 302 samples. This capture predates the band-pass and the AGC, so the numbers describe the plain `dc * 1.01 - ir` trace:
 
 ```
 peaks at samples : 20, 68, 117, 166, 211, 258
@@ -272,6 +372,16 @@ This capture ran at 0.21 % PI, well below the 1.62 % of the best SpO2 recording,
 ## Brief Summary
 
 This is a working reflectance pulse oximeter on an ESP32 that reads SpO2 and heart rate from a MAX30102 over I2C. Debugging was the main focus of the project. The sensor's useful signal is about 1 % of what it reads, and that ratio is unforgiving: all eight problems produced the same flat `0 %`, regardless of the stage. A layered test harness turned that single ambiguous symptom into a specific answer and caught fixes that were themselves broken.
+
+The filtering came after the device already worked, and it is the part that generalises. `filters.py` and `detectors.py` are described by sample rates and corner frequencies rather than by tuned constants, so the respiration and ECG sketches in the neighbouring folders use the same code. The measurement that took longest to accept is that a band-pass has a gain of one: it decides what reaches the output, not how loud it is.
+
+| file | holds |
+| :--- | :--- |
+| `filters.py` | `IIR_filter`, `Biquad`, `BandPass`, `Channel`, `AGC` |
+| `detectors.py` | `AC_extractor`, `Rate_calculator` |
+| `pulse_oximeter.py` | the SpO2 chain, used by `spo2.py` |
+| `max30102.py`, `circular_buffer.py` | the driver, ported from SparkFun |
+| `sim/` | the off-device harness, `python3 sim.py` |
 
 <br />
 
