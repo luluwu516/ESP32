@@ -6,9 +6,11 @@
 
 A thermistor is a resistor whose resistance changes with temperature. Held in the airflow under the nostrils, it sits in warm air on the way out and cool room air on the way in, and its resistance follows. Wired as one arm of a voltage divider, that becomes a voltage the ESP32 can read: a slow wave, one cycle per breath, riding on a much larger DC level.
 
-Nothing amplifies it. The entire breathing signal is **2–3 % of the ADC's range**, and the other 97 % is a constant that carries no information. Pulling that few percent out is the firmware's whole job.
+Nothing amplifies it. The entire breathing signal is **2–3% of the ADC's range**, and the remaining 97% is a constant that carries no information. Pulling that few percent out is the firmware's whole job.
 
 > This is an AI-assisted project. The code was straightforward; getting it to produce a number was not. Almost every fix in the Debugging section came from pasting a capture and having it traced sample by sample against the detection logic, which is a much faster loop than re-running the board and guessing.
+
+<img width="400" alt="NTC Thermistor" src="https://github.com/user-attachments/assets/7dde09b3-3414-4ae7-8253-7d3f4fe2038e" />
 
 <br />
 
@@ -16,9 +18,9 @@ Nothing amplifies it. The entire breathing signal is **2–3 % of the ADC's rang
 
 ### From temperature to a voltage
 
-Exhaled air leaves the body near 34 °C and room air arrives at 22–25 °C. The bead does not reach either temperature — it has thermal mass, and a breath cycle only lasts a few seconds — so it oscillates over a fraction of that range.
+Exhaled air leaves the body near 34°C and room air arrives at 22–25°C. The bead does not reach either temperature. It has thermal mass, and its breath cycle lasts only a few seconds, so it oscillates over a fraction of that range.
 
-An NTC thermistor loses resistance as it warms. In a divider it produces a voltage that rises on exhalation and falls on inhalation, which is the polarity the firmware assumes: **a rising edge is the start of an exhalation.** Swapping the two divider arms inverts this and the detector will lock onto inhalations instead. Nothing breaks, but the phase reported is no longer what the variable names say.
+An NTC thermistor loses resistance as it warms. In a divider, it produces a voltage that rises on exhalation and falls on inhalation, which is the polarity the firmware assumes: **a rising edge is the start of an exhalation** . **Swapping the two divider arms inverts this, and the detector will lock onto inhalations instead.** Nothing breaks, but the phase reported is no longer what the variable names say.
 
 <br />
 
@@ -37,11 +39,11 @@ Every number below comes from captures in this folder, not from a datasheet.
 
 Two consequences follow from that table, and they set every constant in the firmware.
 
-**The signal is small, so the sampling has to earn back the noise.** The loop reads the ADC continuously and reports the **average** over each 300 ms window rather than a single sample. Averaging every read in the window brings the noise down to 3–5 counts, which is what makes a 20-count trigger margin usable. The ECG project in `011-ecg` uses peak-hold over its window instead, because there the feature of interest is a 100 ms spike; here it is a 3.5 s wave, and averaging is strictly better.
+**The signal is small, so the sampling has to earn back the noise.** The loop reads the ADC continuously and reports the **average** over each 300 ms window rather than a single sample. Averaging every read in the window reduces the noise to 3–5 counts, which makes a 20-count trigger margin usable. The ECG project in `011-ecg` uses peak-hold over its window instead, because there the feature of interest is a 100 ms spike; here it is a 3.5 s wave, and averaging is strictly better.
 
 **The signal is slow, so 300 ms sampling is plenty.** At $f_s = 3.33$ Hz against a breathing rate near 0.28 Hz, there are about 12 samples per cycle. That is comfortable for Nyquist and coarse for timing — see Results.
 
-Because everything the firmware does is a *difference* between nearby samples, the ESP32 ADC's well-known nonlinearity does not matter here. The absolute value of the baseline is never used for anything.
+Because everything the firmware does is a *difference* between nearby samples, the ESP32 ADC's well-known nonlinearity does not matter here. The absolute value of the baseline is never used.
 
 <br />
 
@@ -59,7 +61,7 @@ else:
 
 $$\mathrm{amplitude} = \mathrm{peak} - \mathrm{trough}, \qquad \mathrm{mid} = \frac{\mathrm{peak} + \mathrm{trough}}{2}$$
 
-The relaxation is a fixed *fraction*, not a fixed number of counts, and that is the whole point: $0.97^{12} \approx 0.69$, so the envelope gives up about 30 % per breath **at any amplitude**. A capture reading 130 counts and one reading 30 are described the same way.
+The relaxation is a fixed *fraction*, not a fixed number of counts, and that is the whole point: $0.97^{12} \approx 0.69$, so the envelope gives up about 30 % per breath **at any amplitude**. A capture reading of 130 counts and one reading of 30 are described the same way.
 
 From those two numbers come the baseline, the threshold, and the health check:
 
@@ -80,7 +82,7 @@ Three guards remain, each answering a question the threshold cannot:
 | `MAX_INTVAL` | 10000 ms | A gap too long to be breathing — the sensor came off |
 | First-breath discard | — | The first crossing after start-up, whose interval would be timed from boot |
 
-That last one is worth stating plainly, because `010-pulse-oximeter` shipped without it and its first heart-rate reading is wrong by 12 % as a result. Here the first detected breath only stores a timestamp; it contributes no interval.
+That last one is worth stating plainly because `010-pulse-oximeter` shipped without it, and its first heart-rate reading is wrong by 12% as a result. Here, the first detected breath stores only a timestamp; it contributes no interval.
 
 <br />
 
@@ -129,7 +131,7 @@ The divider runs from 3.3 V. Feeding it 5 V puts the ADC node above the ESP32's 
 | Fixed resistor | Between the ADC node and ground | GND |
 | ADC node | The junction of the two | 36 (ADC1_CH0) |
 
-Pick the fixed resistor to match the thermistor's resistance at room temperature. That puts the node near mid-rail, where the divider is most sensitive and the swing has room in both directions.
+Pick the fixed resistor to match the thermistor's resistance at room temperature. That puts the node near mid-rail, where the divider is most sensitive, and the swing has room in both directions.
 
 `adc.atten(ADC.ATTN_11DB)` selects the widest input range. GPIO 36 is input-only and belongs to ADC1, which stays usable while WiFi is on — ADC2 does not, which matters for `rsp_web.py`.
 
@@ -140,6 +142,8 @@ Pick the fixed resistor to match the thermistor's resistance at room temperature
 | Onboard LED | Lit during exhalation | 5 |
 
 On the Lolin D32 the onboard LED on GPIO 5 is **active low**, which is why `setup()` writes `1` to turn it off and the detector writes `0` to light it.
+
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/a80c3616-3199-404b-95be-e6c1ad54af4c" />
 
 <br />
 
@@ -196,7 +200,7 @@ sample 4-35  ...                    never falls below thresh, latch held
 sample 36    1774 < 1775.37         released, 9.9 s later
 ```
 
-The fix is to average the first 7 seconds and seed the filter with that. It is not an optimization; without it the detector is blind for the first minute.
+The fix is to average the first 7 seconds and seed the filter with that. It is not an optimization; without it, the detector is blind for the first minute.
 
 The second time, the cause was the signal. A capture with a good warm-up still failed, because the baseline itself stepped up ~50 counts partway through:
 
@@ -205,11 +209,11 @@ sample 114   1785 > 1762.34 + 20    trigger
 sample 191   1803 vs 1778.30 + 10   still latched, 11.6 s later
 ```
 
-No seeding fixes that one — a 30 second tracker cannot follow a step, by construction. So the second fix is a backstop rather than a cure: if the latch is held longer than `LATCH_TIMEOUT`, drop it *and* discard the run in progress by setting `last_breath = None`.
+No seeding fixes that one — a 30-second tracker cannot follow a step, by construction. So the second fix is a backstop rather than a cure: if the latch is held longer than `LATCH_TIMEOUT`, drop it *and* discard the run in progress by setting `last_breath = None`.
 
-Discarding matters as much as releasing. Releasing the latch alone left a 5000 ms gap behind, which fell inside the valid interval window and would have been recorded as a real breath at 12 brpm. Setting `last_breath = None` routes the next crossing through the first-breath discard instead.
+Discarding matters as much as releasing. Releasing the latch alone left a 5000 ms gap, which fell within the valid interval and would have been recorded as a real breath at 12 brpm. Setting `last_breath = None` routes the next crossing through the first-breath discard instead.
 
-**None of this survives into the current firmware, and that is the argument for the envelope.** The failure needs a baseline estimator that can fall below the signal's own floor and stay there. The envelope midpoint cannot: `peak` refreshes the moment the signal makes a new high, so a step of +50 counts raises `mid` immediately, while `trough` — still sitting at the old low — inflates the measured amplitude. Working it through, `re-arm` ends up about 40 counts above the old trough while the signal's new floor is 50 above it, so the re-arm still fires. The 60 lines of warm-up, timeout, and discard logic were all scaffolding around a baseline that could not keep up.
+**None of this survives into the current firmware, and that is the argument for the envelope.** The failure requires a baseline estimator that can fall below the signal's floor and remain there. The envelope midpoint cannot: `peak` refreshes the moment the signal makes a new high, so a +50-count step raises `mid` immediately, while `trough` — still sitting at the old low — inflates the measured amplitude. Working it through, `re-arm` ends up about 40 counts above the old trough while the signal's new floor is 50 above it, so the re-arm still fires. The 60 lines of warm-up, timeout, and discard logic were all scaffolding around a baseline that could not keep up.
 
 <br />
 
@@ -255,7 +259,7 @@ Problem 5 is the one no code change addresses, and it is what eventually decided
 | 7 | fixed | 31 – 38 | **0** |
 | 8 | **adaptive** | 33 – 69 | **4** |
 
-Capture 2 is the clearest mechanical failure: amplitude fell 89 → 17 → 15 → 11 → 5 over five consecutive breaths while the DC level drifted down 49 counts. Falling amplitude with a drifting baseline is the sensor relaxing out of the airflow, not an electrical fault. The rhythm stayed visible in capture 4 at the right period and the right rate; there was simply not enough of it to cross a threshold that also cleared the noise.
+Capture 2 is the clearest mechanical failure: amplitude fell 89 → 17 → 15 → 11 → 5 over five consecutive breaths while the DC level drifted down 49 counts. Falling amplitude with a drifting baseline is the sensor relaxing out of the airflow, not an electrical fault. The rhythm remained visible in capture 4 at the correct period and rate; there simply wasn't enough of it to cross a threshold that also cleared the noise.
 
 For a long time the plan was to fix the mounting and keep the fixed threshold — an adaptive threshold on a weak signal tracks noise instead of breathing, and does it without complaining, which trades a visible failure for an invisible one. Captures 3 and 6 seemed to confirm it: mount the bead well and everything works.
 
@@ -312,6 +316,8 @@ Triggers landed on samples **1, 13, 25, 36, 47, 59, 69, 80 and 93**: eight inter
 
 * **The log is quiet when nothing is wrong.** One `--` line at start-up, then nothing but data for 28 seconds. No `!!`, no `gap`. Every diagnostic in the firmware is edge-triggered or exceptional, so an uneventful run reads as uneventful.
 
+<img width="600" alt="Thonny's Plotter" src="https://github.com/user-attachments/assets/d4b491b4-41b3-4e69-af78-00229a320b01" />
+
 Raising `TARGET_N_BREATH` to 3 would cut that ±4.3 % to ±2.9 % and smooth the real variation, at the cost of a reading every 10 s instead of 7. That trade only became worth considering once detection was reliable; while breaths were being missed, a higher target just meant waiting longer for a number that never came.
 
 Halving `SAMPLE_INTVAL` to 150 ms halves the quantization directly. It was tried once and abandoned — the capture that failed under it failed on amplitude, and would have failed identically at 300 ms — but the option stands. Note that `ENVELOPE_DECAY` would have to move with it, to $0.985$, since 24 samples per breath instead of 12 would otherwise double the relaxation per cycle. Constants defined per sample are meaningless without the sample interval; this project learned that once already, with $\alpha$.
@@ -327,6 +333,8 @@ Timing from reset to the first number:
 
 The previous version took 14.5 s to the same point, seven of which were a warm-up that existed only to seed a filter that no longer exists.
 
+<img width="600" alt="RSP measurement result" src="https://github.com/user-attachments/assets/d1341b43-537d-43fc-a658-4409eb13b1bb" />
+
 <br />
 
 ## Brief Summary
@@ -335,7 +343,7 @@ A thermistor under the nose, a two-resistor divider, and one ADC pin, reading re
 
 Acquisition was never the hard part. Detection was, and for most of the project it failed silently. A baseline seeded on the wrong sample, a filter too fast to be a baseline, a threshold the peaks no longer reached — each produced an empty console rather than an error, and the only way through was to capture real output and walk it against the logic by hand. Every constant in the file came out of that; none came from reasoning about a waveform in the abstract.
 
-The turn came from a measurement, not an idea. Across eight sittings with the same sensor on the same person, peak-to-trough amplitude ranged from 5 to 131 counts and never converged. A threshold set a fixed number of counts above a baseline cannot span 20x, so half the constants in the firmware existed to prop up an approach that was mismatched to the signal — a warm-up to seed the baseline, a timeout for when the baseline fell behind, an interval limit patching the breaths the margin missed. Scaling the threshold to a measured envelope instead deleted five constants and two guard blocks, halved the time to a first reading, and turned the weakest usable capture from zero readings into four.
+The turn came from a measurement, not an idea. Across eight sittings with the same sensor on the same person, peak-to-trough amplitude ranged from 5 to 131 counts and did not converge. A threshold set a fixed number of counts above a baseline cannot span 20x, so half the constants in the firmware existed to prop up an approach that was mismatched to the signal — a warm-up to seed the baseline, a timeout for when the baseline fell behind, an interval limit patching the breaths the margin missed. Scaling the threshold to a measured envelope instead deleted five constants and two guard blocks, halved the time to a first reading, and turned the weakest usable capture from zero readings into four.
 
 What is left is honest about its own limits. `MIN_AMPLITUDE` is one number serving as both the detection floor and the warning, so `!! amplitude: 19` does not mean the signal is poor — it means *this is why there is no rate*. On a board whose only output is `print()`, that distinction was worth more than any of the signal processing.
 
