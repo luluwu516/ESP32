@@ -212,3 +212,4 @@ Acquiring the signal worked early and well. Separating the R wave from the T wav
 * [AD8232 datasheet](https://www.analog.com/media/en/technical-documentation/data-sheets/ad8232.pdf)
 * [SparkFun Single Lead Heart Rate Monitor hookup guide](https://learn.sparkfun.com/tutorials/ad8232-heart-rate-monitor-hookup-guide)
 * [MicroPython `machine.ADC`, ESP32 port](https://docs.micropython.org/en/latest/esp32/quickref.html#adc-analog-to-digital-conversion)
+* [FLAG](https://www.flag.com.tw/maker/FM636A)

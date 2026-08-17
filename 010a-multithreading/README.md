@@ -158,3 +158,4 @@ There is no `pulse_oximeter.py` here. `ppg-multithreading.py` reads infrared onl
 
 * [010-pulse-oximeter](../010-pulse-oximeter), where the sensor and the filtering are documented
 * [MicroPython `_thread`](https://docs.micropython.org/en/latest/library/_thread.html)
+* [FLAG](https://www.flag.com.tw/maker/FM636A)
