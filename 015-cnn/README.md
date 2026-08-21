@@ -4,11 +4,13 @@
 
 <br />
 
-`010-pulse-oximeter` prints a heart rate whenever three beats arrive within the interval it accepts. It prints one for a finger. It prints one for a finger being wiggled, and on the serial line the two look the same. This project puts a 453-parameter convolutional network on the board to separate them, trained on waveforms the same firmware collected.
+`010-pulse-oximeter` prints a heart rate whenever three beats arrive within the interval it accepts. It prints one for a finger. It prints one for a wiggling finger, and on the serial line the two look the same. This project puts a 453-parameter convolutional network on the board to separate them, trained on waveforms the same firmware collected.
 
-A classifier is a function of its input distribution. Here that distribution comes from four things: the sensor, a band-pass, an automatic gain control, and a padding rule. Change any one of them and the trained weights answer a different question without saying so.
+A classifier is a function of its input distribution. Here, that distribution comes from four things: the sensor, a band-pass, an automatic gain control, and a padding rule. Change any one of them and the trained weights answer a different question without saying so.
 
 > This is an AI-assisted project. None of the four faults below raised an exception, and none of them showed on the serial line. A network that has learned the wrong feature looks like one that has learned the right feature. I found each of them by re-implementing the forward pass in NumPy and running the shipped weights against the collected `.txt` files on the desktop.
+
+<img width="800" alt="MAX30102" src="https://github.com/user-attachments/assets/fa7f394f-e34c-4e16-9c01-000ed98be8ff" />
 
 <br />
 
@@ -27,7 +29,7 @@ At 50 Hz and a resting rate near 70 bpm, three beats take about 2.4 s.
 | Real samples per capture, median | **120** |
 | Zero padding, median | **60 %** |
 
-Most of every training row is padding, and the padding grows as heart rate falls. The network can read that. The book's design puts it there, and it means part of the decision rests on how long three beats took rather than on their shape. Collecting a fixed 300-sample window would remove it, at the cost of counting beats separately.
+Most of every training row is padding, and the padding grows as heart rate falls. The network can read that. The book's design puts it there, meaning part of the decision rests on how long three beats took rather than on their shape. Collecting a fixed 300-sample window would remove it, at the cost of counting beats separately.
 
 <br />
 
@@ -42,13 +44,13 @@ ppg_raw = int(-ac)                        # to the model: signed, real amplitude
 ppg = int(agc.step(-ac) + AGC_TARGET)     # to the beat detector: normalised
 ```
 
-The detector keeps the AGC, which lets one threshold work across a sixfold range of perfusion. The model reads the band-pass output. Both negate `ac`, because reflectance falls at systole.
+The detector keeps the AGC, so one threshold works across a sixfold range of perfusion. The model reads the band-pass output. Both negate `ac`, because reflectance falls at systole.
 
-Normalisation before inference uses the dataset's own statistics, computed on the training split:
+Normalization before inference uses the dataset's own statistics, computed on the training split:
 
 $$x' = \frac{x - \mu}{\sigma}, \qquad \mu = -15.05, \qquad \sigma = 1257.09$$
 
-Those two constants join the two programs, and they hold for one signal chain. Change the LED current, a filter corner, the AGC, or the sign, and they stop describing what the sensor now produces. `ppg_model.py` prints them at the end of every training run, and nothing else records them.
+Those two constants join the two programs and apply to one signal chain. Change the LED current, a filter corner, the AGC, or the sign, and they no longer describe what the sensor now produces. `ppg_model.py` prints them at the end of every training run, and nothing else records them.
 
 <br />
 
@@ -69,11 +71,11 @@ Unchanged from `CH11/ppg_model.py`, trained by TensorFlow on the desktop and con
 | Dense, sigmoid | 1 | 281 |
 | | | **453** |
 
-453 parameters and 10.9 kB of JSON. Inference on the ESP32 costs a pause too short to see between the third beat and the printed class. `keras_lite` is frozen into the FLAG firmware, so the board needs no installation.
+453 parameters and 10.9 kB of JSON. Inference on the ESP32 is so fast that the pause between the third beat and the printed class is too short to see. `keras_lite` is frozen into the FLAG firmware, so the board needs no installation.
 
 <br />
 
-### Three layers of judgement
+### Three Layers of Judgment
 
 The network answers one of three questions, and separating them is what makes each one work.
 
@@ -83,7 +85,7 @@ The network answers one of three questions, and separating them is what makes ea
 | Is this waveform a pulse or an artifact? | the CNN | amplitude and shape |
 | Is the contact pressure right? | *not implemented*, see below | upstroke/downstroke asymmetry |
 
-The first question does not belong in the network, though that is where the original design put it. With no finger, the AGC's `floor` caps gain at `target/floor` = 6.25, so a 2 to 4 count noise signal reaches about 25 against a `BEAT_THRESHOLD` of 50. The detector almost never fires, three beats almost never accumulate, and the program stays quiet for a minute or more. A DC test needs no beats at all. It runs on every sample and reports within about 20 ms.
+The first question does not belong in the network, though that is where the original design put it. With no finger, the AGC's `floor` caps gain at `target/floor` = 6.25, so a 2- to 4-count noise signal reaches about 25 against a `BEAT_THRESHOLD` of 50. The detector almost never fires, three beats almost never accumulate, and the program stays quiet for a minute or more. A DC test needs no beats at all. It runs on every sample and reports within about 20 ms.
 
 $$\text{finger on} \rightarrow \text{off at } dc < 9000, \qquad \text{off} \rightarrow \text{on at } dc > 15000$$
 
@@ -119,9 +121,9 @@ Rest the finger on the sensor without pressing. The onboard LED on pin 5 flashes
 | `ppg_model.py` | desktop training script, needs TensorFlow | **no** |
 | `keras_lite_convertor.py` | desktop dataset reader and JSON writer | **no** |
 
-The two bottom rows import `numpy` and `tensorflow` and target CPython. MicroPython v1.16 cannot parse them at all, since `keras_lite_convertor.py` uses an f-string and f-strings arrive in v1.17.
+The two bottom rows import `numpy` and `tensorflow` and target CPython. MicroPython v1.16 cannot parse them at all, since `keras_lite_convertor.py` uses an f-string, and f-strings arrived in v1.17.
 
-`ppg-collect-data.py` and `ppg-cnn.py` share their signal chain line for line, from `ppg_channel.step(ir)` down to `data.append(ppg_raw)`. Change one without the other and nothing raises an error. The model answers about a distribution it never saw.
+`ppg-collect-data.py` and `ppg-cnn.py` share their signal chain line for line, from `ppg_channel.step(ir)` down to `data.append(ppg_raw)`. Change one without the other, and nothing errors. The model answers about a distribution it never saw.
 
 <br />
 
@@ -151,8 +153,8 @@ Four faults. None of them raised an exception, and none showed on the serial lin
 | :--- | :--- | :--- | :--- |
 | 1 | Signal | The AGC divides amplitude out, and amplitude is most of what separates the two classes | The model reads the one representation with the discriminating feature removed |
 | 2 | Model | The network learned amplitude and little else | Perfect on high-amplitude motion, 10 errors in 32 where amplitude cannot separate |
-| 3 | Design | Three detected beats gated every report | With no finger the AGC floor holds noise under the beat threshold, so the program stayed quiet for a minute or more |
-| 4 | Model | Dropping the ambiguous low-amplitude rows left `others` almost all high-amplitude | 300 zeros now score 0.971 as `ppg`, and the DC gate is the only remaining defence |
+| 3 | Design | Three detected beats gated every report | With no finger, the AGC floor holds noise under the beat threshold, so the program stayed quiet for a minute or more |
+| 4 | Model | Dropping the ambiguous low-amplitude rows left `others` almost all high-amplitude | 300 zeros now score 0.971 as `ppg`, and the DC gate is the only remaining defense |
 
 Fault 1 sits at the boundary between training and inference. Faults 2 through 4 are about which feature the network settled on.
 
@@ -162,7 +164,7 @@ Fault 1 sits at the boundary between training and inference. Faults 2 through 4 
 
 The book's two classes differ mostly in size: `others` spans ±14512, `ppg` spans ±588. Any classifier will find that.
 
-The AGC from `010-pulse-oximeter` divides it out. Its docstring says as much, *"Amplitude information is gone"*, while forbidding the AGC to feed an SpO2 calculation. The same sentence rules it out here. Feed the AGC output to the model and only shape remains, for a network with 453 parameters and 100 examples per class.
+The AGC from `010-pulse-oximeter` divides it out. Its docstring says as much: *"Amplitude information is gone"* while forbidding the AGC from feeding an SpO2 calculation. The same sentence rules it out here. Feed the AGC output to the model and only shape remains, for a network with 453 parameters and 100 examples per class.
 
 Splitting the signal in two, `ppg_raw` for the model and `ppg` for the detector, costs one line and gives the classification its feature back.
 
@@ -185,9 +187,9 @@ All ten errors ran `others → ppg`, all ten at low amplitude. So I ran a contro
 | Whole waveform, per-row normalised | 74.0 % | 16 / 32 |
 | Three shape descriptors | **86.5 %** | 24 / 32 |
 
-51.6 % against a 50 % chance line. Amplitude cannot see pressing too hard, so no volume of extra training data repairs it in a network that has learned amplitude. Adding that data teaches "small means artifact", which condemns every weak pulse.
+51.6 % against a 50 % chance line. Amplitude can't tell pressing too hard, so no volume of extra training data can fix it in a network that has learned amplitude. Adding that data teaches "small means artifact", which condemns every weak pulse.
 
-Shape carries it, for a physiological reason. A pulse is an arterial pressure wave: fast upstroke, slow decay, peak skewed early. Occlude the capillaries and a passive damped oscillation remains, closer to a symmetric sinusoid.
+Shape carries it, for a physiological reason. A pulse is an arterial pressure wave: fast upstroke, slow decay, peak skewed early. Occlude the capillaries, and a passively damped oscillation remains, closer to a symmetric sinusoid.
 
 | Descriptor | Normal pulse | Pressed too hard |
 | :--- | ---: | ---: |
@@ -231,9 +233,9 @@ Dropping the 32 ambiguous pressed-tight rows from `others.txt` and retraining st
 | ±2 count noise, 200 trials | 0 % ppg | **100 % ppg** |
 | ±20 count noise, 200 trials | 0 % ppg | **100 % ppg** |
 
-With `others` now almost all high-amplitude, the network has learned *large means artifact, everything else is a pulse*. It is wrong about silence, and confident.
+With `others` now almost all high-amplitude, the network has learned *large means artifact; everything else is a pulse*. It is wrong about silence, and confident.
 
-The DC gate reaches that case first, which is what makes this workable, and no second line of defence remains behind it. What survives is a finger present but not pulsating, pressed too hard or resting without contact: the DC gate passes it, the network returns `ppg` at 0.89, and the program computes a heart rate from noise-triggered beats.
+The DC gate reaches that case first, which is what makes this workable, and no second line of defense remains behind it. What survives is a finger present but not pulsating, pressed too hard or resting without contact: the DC gate passes it, the network returns `ppg` at 0.89, and the program computes a heart rate from noise-triggered beats.
 
 <br />
 
@@ -264,7 +266,7 @@ HR: 72.0
 Class: others (no finger)
 ```
 
-The first line shows the network working: amplitude 2759 while the finger settles, called an artifact. `others (no finger)` and `Finger on!` arrive within one sample of the physical event rather than after three beats. Heart rate holds within 2 bpm across three placements, and `amp` stays between 254 and 469, inside the interquartile range of the `ppg` training set at 163 to 251. That last comparison is the check that the live distribution still matches the trained one.
+The first line shows the network working: amplitude 2759 while the finger settles, called an artifact. `others (no finger)` and `Finger on!` arrive within one sample of the physical event rather than after three beats. Heart rate stays within 2 bpm across three placements, and `amp` stays between 254 and 469, inside the interquartile range of the `ppg` training set (163 to 251). That last comparison checks that the live distribution still matches the trained one.
 
 Evaluating the shipped weights against the whole dataset:
 
@@ -275,15 +277,17 @@ Evaluating the shipped weights against the whole dataset:
 | `others` recall | 91/100 |
 | Outputs in 0.3–0.7 | 8/200, down from 27 |
 
+<img height="400" alt="Result" src="https://github.com/user-attachments/assets/0a8c33fd-e375-45a7-aa2f-f0b03cbc2abc" />
+
 <br />
 
 ## What is not verified
 
-**That 95.5 % is in-sample.** 80 % of those rows trained the network. `ppg_model.py` holds out 15 rows for validation and 5 for test, too few to mean anything. The honest figure is lower and nobody has measured it. A 70/30 split with a fixed `random_seed` would produce a number worth quoting.
+**That 95.5 % is in-sample.** 80 % of those rows trained the network. `ppg_model.py` holds out 15 rows for validation and 5 for test, too few to mean anything. The honest figure is lower, and nobody has measured it. A 70/30 split with a fixed `random_seed` would produce a number worth quoting.
 
 **Both classes come from one person, one sitting, one sensor.** Perfusion varies more than sixfold between people, and perfusion is the feature the network leans on.
 
-**Pressed-tight contact goes undetected.** I measured it, characterised it, and kept it out of the training data, since it asks about contact quality rather than waveform class. The shape rule that handles it lives in this README and not in the firmware.
+**Pressed-tight contact goes undetected. **I measured it, characterized it, and kept it out of the training data, since it asks about contact quality rather than waveform class.** The shape rule that handles it lives in this README, not in the firmware. **
 
 **Nothing checks the heart rate.** The classifier gates whether a rate prints. Whether that rate is right belongs to `010-pulse-oximeter`.
 
@@ -291,11 +295,11 @@ Evaluating the shipped weights against the whole dataset:
 
 ## Brief Summary
 
-A 453-parameter network on a microcontroller, deciding whether 300 samples look like a pulse. It works. What went wrong along the way was about which feature the network picked up, never about its size or its training.
+A 453-parameter network on a microcontroller, deciding whether 300 samples look like a pulse. It works. What went wrong along the way was which feature the network picked up, not its size or its training.
 
 The AGC is the clearest case. It exists to make a weak pulse and a strong pulse reach the same height, which is what the beat detector wants and the reverse of what the classifier needs. One line splits the signal so each of them gets what it wants.
 
-Accuracy hid the rest. Ninety-one percent covered a network that had learned one feature, and cross-validating that single scalar on its own returned 51.6 % where chance is 50. That number said more than the accuracy ever did. A DC threshold answers whether a finger is there. Three lines of arithmetic about waveform asymmetry answer whether the contact is right. The network answers what is left, which is the part worth spending 453 parameters on.
+Accuracy hid the rest. Ninety-one percent covered a network that had learned one feature, and cross-validating that single scalar on its own returned 51.6%, where chance is 50. That number said more than the accuracy ever did. A DC threshold answers whether a finger is there. Three lines of arithmetic about waveform asymmetry answer whether the contact is right. The network answers what is left, which is the part worth spending 453 parameters on.
 
 <br />
 
