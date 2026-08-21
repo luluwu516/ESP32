@@ -4,11 +4,13 @@
 
 <br />
 
-A heartbeat is one event that reaches two sensors at two different times. The ECG electrodes see the ventricles depolarize; a few hundred milliseconds later the photoplethysmograph on a fingertip sees the pressure wave arrive. That gap is the **pulse wave transit time (PWTT)**. It shortens as arteries stiffen, which is what rising blood pressure does to them.
+A heartbeat is one event that reaches two sensors at two different times. The ECG electrodes see the ventricles depolarize; a few hundred milliseconds later the photoplethysmograph on a fingertip sees the pressure wave arrive. That gap is the **pulse wave transit time (PWTT)**. It shortens as arteries stiffen, which rising blood pressure does.
 
-The measurement is a subtraction between two clocks. Signal amplitude never enters it; only arrival time does. That constraint decides the design choices in the firmware, and each fault in the Debugging section turned out to be a timing fault in disguise.
+The measurement is a subtraction between two clocks. Signal amplitude never enters it; only arrival time does. That constraint drives the firmware design choices, and each fault in the Debugging section turned out to be a timing fault in disguise.
 
-> This is an AI-assisted project. The signal chain came together in an afternoon and then produced a number that would not move for a week. Each fix below came from adding one measurement to the status line and reading it. Three confident diagnoses along the way were wrong, and the working pattern was to stop reasoning and print the number.
+> This is an AI-assisted project. The signal chain came together in an afternoon, then produced a number that wouldn't move for a week. Each fix below came from adding one measurement to the status line and reading it. Three confident diagnoses along the way were wrong, and the working pattern was to stop reasoning and print the number.
+
+<img width="800" alt="MAX30102 and AD8232" src="https://github.com/user-attachments/assets/8d30f663-4ee8-44c8-addc-9b2c148cac96" />
 
 <br />
 
@@ -31,7 +33,7 @@ $$\mathrm{BP} \approx 216 - 0.41 \cdot \mathrm{PWTT}$$
 
 | Error source | Cost | Fix |
 | :--- | :--- | :--- |
-| Quantising the R-wave timestamp to a 50 ms window | ±20 mmHg | detect R on every loop iteration, not on the window |
+| Quantizing the R-wave timestamp to a 50 ms window | ±20 mmHg | detect R on every loop iteration, not on the window |
 | PPG sampled at 50 Hz | ±8 mmHg | run the sensor at 100 Hz |
 | Band-pass group delay at 5 Hz | 18 mmHg, one-sided | move the corner to 8 Hz, subtract the rest |
 | One dropped FIFO sample batch | tens of mmHg | see Debugging |
@@ -49,7 +51,7 @@ The loop does three things at three rates, and keeping them separate is what mak
 | 50 ms | update the ECG baseline | a five-second time constant needs no faster feed |
 | 1 s | print the status line | see below |
 
-`011-ecg` reports the **maximum** of each 50 ms window. That peak-hold survives here, feeding the baseline and nothing else; the trigger comparison runs on the instantaneous sample. Quantising the R timestamp to the display window would have cost more than the other three error sources combined.
+`011-ecg` reports the **maximum** of each 50 ms window. That peak-hold survives here, feeding the baseline and nothing else; the trigger comparison runs on the instantaneous sample. Quantizing the R timestamp to the display window would have cost more than the other three error sources combined.
 
 `011-ecg` also printed one line per window, twenty a second, and that loop held a single `adc.read()` and could afford it. Here the loop is the measurement. One status line costs 6–35 ms, so twenty of them spend up to 700 ms of every second not looking at the ADC, and any R found on the far side of a print carries a timestamp that late. The baseline kept its 50 ms tick; the print moved to its own.
 
@@ -65,7 +67,7 @@ $$b_n = \alpha b_{n-1} + (1-\alpha) x_n, \qquad \alpha = 0.99, \qquad \mathrm{tr
 
 Fed at 20 Hz, $\alpha = 0.99$ gives a five-second time constant. A 500 ms refractory period rejects the T wave, which lands 250–300 ms after R.
 
-`BEAT_MARGIN` came from `011-ecg` at 330 and had to come down to 200. Electrode signal strength is a property of the sitting, not of the code, and on this hardware the second's best peak often landed below a 330 threshold: 2109 against 2301, 2070 against 2303, 2087 against 2301. Watch the two numbers in `ECG:peak/threshold` converge and lower it further.
+`BEAT_MARGIN` came from `011-ecg` at 330 and had to come down to 200. Electrode signal strength is a property of the sitting, not of the code, and on this hardware the second-best peak often landed below a 330 threshold: 2109 against 2301, 2070 against 2303, 2087 against 2301. Watch the two numbers in `ECG:peak/threshold` converge and lower it further.
 
 The five-second time constant also sets how long the warm-up has to be, and that took two runs to get right. See Debugging.
 
@@ -73,11 +75,11 @@ The five-second time constant also sets how long the warm-up has to be, and that
 
 ### Finding the pulse
 
-The project departs from the book's version here, for repeatability.
+The project departs from the book's version here for repeatability.
 
-The book detects a pulse when a DC-removed signal crosses a **fixed threshold of 20 counts**. Perfusion varies more than sixfold between people and between sittings, so that threshold lands at a different height on the upstroke each sitting. Height on the upstroke is what sets the timestamp.
+The book detects a pulse when a DC-removed signal crosses a **fixed threshold of 20 counts**. Perfusion varies more than sixfold between people and between sittings, so that threshold lands at a different height on the upstroke each sitting. The upstroke height sets the timestamp.
 
-Instead, the signal passes through an automatic gain control (`AGC` in `filters.py`, shared with `010a`) that divides out a running amplitude estimate, and the trigger sits at **50 % of the normalised height**. Simulated against the same synthetic pulse:
+Instead, the signal passes through an automatic gain control (`AGC` in `filters.py`, shared with `010a`) that divides out a running amplitude estimate, and the trigger sits at **50 % of the normalized height**. Simulated against the same synthetic pulse:
 
 | AC amplitude | Book: one-pole DC, +20 counts | Here: AGC, 50 % |
 | :--- | :--- | :--- |
@@ -85,7 +87,7 @@ Instead, the signal passes through an automatic gain control (`AGC` in `filters.
 | 500 counts | 25.7 ms | **83.6 ms** |
 | 800 counts | 18.6 ms | **83.6 ms** |
 
-The AGC trigger holds still. The book's slides 15 ms across that range, 6 mmHg of scatter produced by how hard you press your finger.
+The AGC trigger holds still. The book's slides show 15 ms across that range, 6 mmHg of scatter produced by how hard you press your finger.
 
 Two consequences:
 
@@ -105,7 +107,7 @@ Two programs, one heartbeat, PWTTs 10 ms apart. Four mmHg of disagreement for no
 
 ### From PWTT to a number
 
-`bp_model.json` is a 1→20→20→20→1 dense network trained by `bp_model.py`, normalised as `pwtt/200` in and `bp/100` out. Evaluating the shipped weights:
+`bp_model.json` is a 1→20→20→20→1 dense network trained by `bp_model.py`, normalized as `pwtt/200` in and `bp/100` out. Evaluating the shipped weights:
 
 | PWTT | Model output |
 | :--- | :--- |
@@ -115,7 +117,7 @@ Two programs, one heartbeat, PWTTs 10 ms apart. Four mmHg of disagreement for no
 | 250 ms | 109.2 mmHg |
 | 275 ms | 109.4 mmHg |
 
-That table shows two problems. Below 180 ms the curve runs **backwards**, against the physiology, because 55 of the 61 training rows sit in 180–275 and the low end rests on one contradictory point at (130, 114) that three layers of twenty units memorised. Above 250 ms the curve goes **flat**, so any longer measurement returns the same 109.4.
+That table shows two problems. Below 180 ms, the curve runs **backward**, against physiology, because 55 of the 61 training rows sit in 180–275 and the low end rests on one contradictory point at (130, 114) that three layers of twenty units memorized. Above 250 ms, the curve goes **flat**, so any longer measurement returns the same 109.4.
 
 `cal_bp()` clamps its input to **180–275 ms**, the region the data supports, and says so when it does:
 
@@ -146,6 +148,8 @@ The code collects five beats and takes the **median**. One mispaired beat drags 
 | LO+ | Leads-off detect | 32 |
 | LO− | Leads-off detect | 33 |
 
+<img width="400" alt="Connection" src="https://github.com/user-attachments/assets/cdcf2823-cdc0-46d2-bab5-1082f68d044b" />
+
 <br />
 
 Electrodes follow the Lead I placement from `011-ecg`: RA below the right collarbone, LA below the left, RL on the lower right abdomen. Rest your finger on the MAX30102 without pressing. Pressure flattens the capillaries and takes the perfusion signal with them.
@@ -169,7 +173,7 @@ The onboard LED on pin 5 flashes on each accepted pulse, so you can see whether 
 
 The two programs share their measurement path line for line. `bp-web.py` adds timing instrumentation, the model call, and a `Shared` object the web handlers read; the ECG block and the 50 ms tick are identical text. Anything that changes how a beat is timed has to land in both, and a diff of those blocks is the check.
 
-`index.html` belongs to `bp-web.py`, not beside it. Upload one without the other and the page requests a route the board does not serve.
+`index.html` belongs to `bp-web.py`, not beside it. Upload one without the other, and the page requests a route the board does not serve.
 
 Two driver notes, both found the hard way:
 
@@ -211,7 +215,7 @@ Detection held in all three rows. The rate died in one, when the envelope grazed
 
 `PPG_MIN_ENV` was supposed to mean "no finger". I had set it to 20, and a live but weak finger produced an envelope of 14–20, so the gate fired thousands of times a minute on live data.
 
-The AGC's own `floor` of 16 already caps the gain: with nothing on the sensor the output tops out near 12, under the trigger. The gate has to catch a dead signal and nothing else, so it moved to 5.
+The AGC's own `floor` of 16 already caps the gain: with nothing on the sensor, the output tops out near 12, under the trigger. The gate has to catch a dead signal and nothing else, so it moved to 5.
 
 <br />
 
@@ -263,7 +267,7 @@ The book runs the web server in a `_thread`. I measured it against identical cod
 | R vs P beat counts | 20 % apart | 50 % apart | **equal** |
 | PWTT | 271–365 | not measured | 247–268 |
 
-The GIL handoff between two MicroPython threads costs an order of magnitude, and it lands on the loop whose timing is the measurement. Before running this comparison I blamed garbage collection, then the status print. A `mem:` field showed 43–70 kB free and a `pr:` field showed the print costing 6–35 ms, so both guesses died, one run each.
+The GIL handoff between two MicroPython threads costs an order of magnitude, and it lands on the loop whose timing is the measurement. Before running this comparison, I blamed garbage collection, then the status print. A `mem:` field showed 43–70 kB free and a `pr:` field showed the print costing 6–35 ms, so both guesses died, one run each.
 
 <br />
 
@@ -289,7 +293,7 @@ web:5ms/0
 
 $\alpha = 0.99$ fed at 20 Hz gives a time constant of five seconds, and `WARMUP_MS` was 5000. One time constant is 63 % of the way there.
 
-The AD8232 spends most of that settling itself, so the baseline seeds on the transient and climbs out of it. From a soft reboot the first window it sees is around 300 counts against a steady state near 1950:
+The AD8232 spends most of that settling itself, so the baseline seeds on the transient and climbs out of it. From a soft reboot, the first window it sees is around 300 counts against a steady state near 1950:
 
 | `WARMUP_MS` | Predicted threshold | Measured |
 | :--- | :--- | :--- |
@@ -299,7 +303,7 @@ The AD8232 spends most of that settling itself, so the baseline seeds on the tra
 
 I expected a threshold 600 counts low to produce extra triggers. It produced the opposite. `ecg_rearm` is the baseline itself, so a baseline sitting under the signal's own trough never gets crossed downward and `r_is_high` latches on: R stuck at 1 for three seconds while the PPG counted 4, then tracking at the right rate for the rest of the run and three beats behind.
 
-Three time constants. `BASELINE_MIN_FEEDS` counts the windows the filter received as well as the seconds that passed, since `ECG_CLIP` skips the railed ones and a clipping front end can reach 15 s having fed the filter far less.
+Three time constants. `BASELINE_MIN_FEEDS` counts the windows the filter received and the seconds that passed, since `ECG_CLIP` skips the railed ones and a clipping front end can reach 15 s while feeding the filter far less.
 
 <br />
 
@@ -315,7 +319,7 @@ With the page open:
 | 2, both served | 444–462 ms |
 | 1, timing out | 308–316 ms |
 
-One request cost **228 ms** of the sampling loop, and the page was asking for two of them every three seconds plus one the browser opened and never used. A quarter of the loop, spent blind to the ECG. `R/P` ran 29/35 and the ECG heart rate read 49–55 against the PPG's 65–70.
+One request cost **228 ms** of the sampling loop, and the page asked for two every three seconds, plus one the browser opened and never used. A quarter of the loop was spent blind to the ECG. `R/P` ran 29/35, and the ECG heart rate read 49–55 against the PPG's 65–70.
 
 I blamed Nagle's algorithm. `ESPWebServer.ok()` writes the status line and the body as two segments, and a second segment waiting on a client's delayed ACK is a textbook 200 ms. Rewriting it as one write with `Content-Length` took a request from 243 ms to 228 ms, so that theory died too. Whatever the 200 ms is, it sits below HTTP.
 
@@ -329,11 +333,11 @@ Asking for less worked. `/hr` and `/bp` became a single `/data`, and the page po
 | `gap` | 300–380 ms | 10–16 ms |
 | `R/P` | 29/35 | **16/16** |
 
-The rewrite earned its place anyway: `Connection: close` is what stopped the browser holding a spare socket open until it timed out.
+The rewrite earned its place anyway: `Connection: close` stopped the browser from holding a spare socket open until it timed out.
 
-Two guards cover what is left. `R_MAX_GAP` refuses a PWTT whose R was found on the first iteration after a stall, because that timestamp is late by the length of the stall. `PPG_MAX_AGE_MS` refuses one whose pulse came out of a FIFO left to fill for longer than its 32 samples hold, because `CircularBuffer` drops the oldest and back-dating assumes none went missing. Between them they caught every bad pairing in the logs above: −44, −27, −13, and one memorable 1072.
+Two guards cover what is left. `R_MAX_GAP` refuses a PWTT whose R was found on the first iteration after a stall, because that timestamp is late by the stall length. `PPG_MAX_AGE_MS` refuses one whose pulse came out of a FIFO left to fill for longer than its 32 samples hold, because `CircularBuffer` drops the oldest and backdating assumes none went missing. Between them they caught every bad pairing in the logs above: −44, −27, −13, and one memorable 1072.
 
-228 ms per connection is still there. Wi-Fi modem sleep fits it, two beacon intervals at 100 ms each, but this firmware answers `sta.config(pm=...)` with `unknown config param`, so the hypothesis stays untested.
+228 ms per connection is still there. Wi-Fi modem sleep fits it: two beacon intervals at 100 ms each, but this firmware answers `sta.config(pm=...)` with `unknown config param`, so the hypothesis stays untested.
 
 <br />
 
@@ -352,7 +356,7 @@ Reading the line: the ECG peak against the threshold it had to clear, the two he
 
 Two independent sensors, two independent rate calculators, **0.1 bpm apart**, and beat counts that stayed equal for 45 beats. Nothing in the code couples them.
 
-`bp-web.py`, a different sitting, with the page open:
+`bp-web.py`, a different session, with the page open:
 
 ```
 ECG:2483/2133  HR p/e:74.9/68.9  env:113.1  dc:17966  R/P:8/8   gap:244ms  web:233ms/1  PWTT:243  BP:110.9
@@ -369,7 +373,9 @@ Three things worth reading from these:
 * **PWTT does not track heart rate.** Two `blood-pressure.py` sessions minutes apart, with identical constants, sat at 72 bpm and 94 bpm and both reported 219–232 ms. Transit time should be independent of rate, and it was, which argues the number measures what it claims to. (Those two are not comparable to the 234 above: `PPG_DELAY_MS` was 30 then and is 58 now, so the raw intervals differ by 28 ms.)
 * **The spread is about 10 ms**, or 4 mmHg. That is the short-term repeatability of this method on this hardware. Averaging harder in the firmware will not shrink it, since it comes from physiology plus a 10 ms sample period.
 
-The two programs land 10 ms apart across these sittings, 225–235 against 240–243. They run the same chain and the same `PPG_DELAY_MS`, so that gap is not systematic and the sample is too small to call it anything else. Deciding would take one sitting with the two programs swapped back and forth, which nobody has done.
+The two programs land 10 ms apart across these sittings, 225–235 against 240–243. They run the same chain and the same `PPG_DELAY_MS`, so that gap isn't systematic, and the sample is too small to call it anything else. Deciding would take one sitting of swapping the two programs back and forth, which nobody has done.
+
+<img width="400" alt="Result" src="https://github.com/user-attachments/assets/47c0f29c-fa47-40ef-8f1b-6f1ffc2fb3d9" />
 
 <br />
 
