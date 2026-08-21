@@ -152,8 +152,18 @@ MAX30102_EXPECTED_PART_ID = 0x15
 
 TAG = 'MAX30102'
 
-# Size of the queued readings
-STORAGE_QUEUE_SIZE = 4
+# Size of the queued readings.
+#
+# Matched to the chip's own 32-deep FIFO. check() moves every pending sample
+# out of that FIFO into this buffer, and CircularBuffer.append drops the
+# OLDEST when it is full — so a buffer smaller than the FIFO throws away data
+# the chip successfully kept. Measured in 014 with a caller stalling ~240 ms
+# once a second at 50 Hz: 12 samples arrive, 4 fit, 8 are discarded, 16% of
+# the signal. That breaks filter continuity and eats pulse upstrokes, which
+# lands directly in a pulse transit time measurement.
+#
+# Cost of 32: three deques of 32 ints instead of 4, a few hundred bytes.
+STORAGE_QUEUE_SIZE = 32
 
 
 # Data structure to hold the last readings
@@ -591,25 +601,7 @@ class MAX30102(object):
         number_of_samples = len(self.sense.ir)
         return number_of_samples
 
-    # Get a new IR value
-    def get_ir(self):
-        # Check the sensor for new data for 250ms
-        if self.safe_check(250):
-            return self.sense.ir.pop_head()
-        else:
-            # Sensor failed to find new data
-            return 0
-
-    # Get a new red value
-    def get_red(self):
-        # Check the sensor for new data for 250ms
-        if self.safe_check(250):
-            return self.sense.red.pop_head()
-        else:
-            # Sensor failed to find new data
-            return 0
-
-    # Note: the following 3 functions are the equivalent of using 'getFIFO'
+    # Note: the following functions are the equivalent of using 'getFIFO'
     # methods of the SparkFun library
 
     # Pops the next IR value in storage (if available)
@@ -625,13 +617,6 @@ class MAX30102(object):
             return 0
         else:
             return self.sense.red.pop()
-
-    # (useless - for comparison purposes only)
-    def next_sample(self):
-        if self.available():
-            # With respect to the SparkFun library, using a deque object 
-            # allows us to avoid manually advancing of the tail
-            return True
 
     # Polls the sensor for new data
     def check(self):

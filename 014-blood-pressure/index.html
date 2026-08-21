@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blood Pressure Measurement</title>
+  <style type="text/css">
+    body {
+      background: rgb(42, 42, 42);
+      font-family: Microsoft JhengHei;
+    }
+
+    .button {
+      background-color: #919191;
+      border: none;
+      font-family: Microsoft JhengHei;
+      width: 180px;
+      height: 90px;
+      color: white;
+
+      text-align: center;
+      font-size: 50px;
+
+      cursor: pointer;
+      border-radius: 50px;
+      margin-top: 50px;
+    }
+
+    .preventcopy {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    p {
+      font-size: 30px;
+      font-family: Microsoft JhengHei;
+      color: white;
+      margin-top: 0;
+    }
+
+    .ppin{
+      font-size: 50px;
+      margin-bottom: 0;
+      margin-left: 30;
+    }
+    .num{
+      font-family: Microsoft JhengHei;
+      color: rgb(231, 251, 44);
+      font-size: 70px;
+    }
+    .rainbow1{
+      font-family: Microsoft JhengHei;
+      color: green;
+      font-size: 30px;
+    }
+    .rainbow2{
+      font-family: Microsoft JhengHei;
+      color: yellow;
+      font-size: 30px;
+    }
+    .rainbow3{
+      font-family: Microsoft JhengHei;
+      color: orange;
+      font-size: 30px;
+    }
+    .rainbow4{
+      font-family: Microsoft JhengHei;
+      color: red;
+      font-size: 30px;
+    }
+
+    .heart{
+      font-size: 60px;
+    }
+
+    div {
+      text-align: center;
+    }
+  </style>
+
+  <script type="text/javascript">
+    var bp = 120;
+    var hr = 70;
+    var isrun = false;
+
+    function getpin(val) {
+      strpin = "🔻";
+      strspace = "";
+      delta = Math.abs(val - 130);
+      if (delta > 5) {
+          strspace += "&emsp;";
+        }
+        if (delta > 10) {
+          strspace += "&emsp;";
+        }
+        if (delta > 15) {
+          strspace += "&emsp;";
+        }
+        if (delta > 20) {
+          strspace += "&emsp;";
+        }
+      if (val < 130) {
+        strpin += strspace;
+      }
+      else {
+        strpin = strspace + strpin;
+      }
+      return strpin;
+    }
+
+    // One request, both numbers. /hr and /bp were two connections every
+    // three seconds, and on the ESP32 a connection costs ~228 ms of the
+    // sampling loop whatever is in it: the loop is blind to the ECG for all
+    // of that, and R waves go missing. One connection every five seconds is
+    // a sixth of the traffic for the same display.
+    function getdata() {
+      if (isrun) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            var parts = this.responseText.split(",");
+            bp = parseFloat(parts[0]);
+            hr = parseInt(parts[1]);
+            document.getElementById("snum").innerHTML = bp;
+            document.getElementById("pin").innerHTML = getpin(bp);
+            document.getElementById("snum2").innerHTML = hr;
+          }
+        };
+        xhttp.open("GET", "/data", true);
+        xhttp.send();
+      }
+    }
+    function start(){
+      if (isrun) {
+        isrun = false;
+        document.getElementById("switch").innerHTML = "▷";
+      } else {
+        isrun = true;
+        document.getElementById("switch").innerHTML = "▢";
+        getdata();
+      }
+    }
+    // 5 s. Measured on the board: a second with no connection costs the
+    // sampling loop 5 ms of web time, a second with one costs 228 ms. BP
+    // only updates once every five beats, about 4.3 s, so a faster refresh
+    // shows nothing new and takes R waves away to do it.
+    window.setInterval(getdata, 5000);
+  </script>
+
+</head>
+
+<body class=preventcopy ondragstart="return false" oncontextmenu="return false" onselectstart="return false">
+  <div>
+    <p>SBP&nbsp<span id=snum class=num>---</span>mmHg</p>
+    <p><span class="heart">❤&nbsp&nbsp</span><span id=snum2 class=num>--</span>beat/min</p>
+    <p class="ppin"><span id="pin">🔻&emsp;&emsp;&emsp;</span></p>
+    <p><span class="rainbow1">▅▅▅</span><span class="rainbow2">▅▅▅</span><span class="rainbow3">▅▅▅</span><span class="rainbow4">▅▅▅</span></p>
+    <span id="bar"></span>
+    <button type="button" class="button" onclick='start()'><span id=switch>▷</span></button>
+  </div>
+</body>
+</html>
